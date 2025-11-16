@@ -70,11 +70,13 @@ class RicReviews_API
 
         // Try to add language code if available (might help with results)
         $language_code = get_locale();
+        $requested_language = '';
         if (!empty($language_code)) {
             // Convert WordPress locale to Google API format (e.g., 'it_IT' -> 'it')
             $lang = explode('_', $language_code);
             if (!empty($lang[0])) {
-                $body['languageCode'] = strtolower($lang[0]);
+                $requested_language = strtolower($lang[0]);
+                $body['languageCode'] = $requested_language;
             }
         }
 
@@ -275,6 +277,18 @@ class RicReviews_API
                 }
             }
 
+            // Extract language from review if available, otherwise use requested language
+            // Note: Google Places API may not return language in review object
+            // We use the languageCode sent in the request as fallback
+            $review_language = '';
+            if (isset($text_object['languageCode'])) {
+                $review_language = sanitize_text_field($text_object['languageCode']);
+            } elseif (isset($review['languageCode'])) {
+                $review_language = sanitize_text_field($review['languageCode']);
+            } elseif (!empty($requested_language)) {
+                $review_language = $requested_language;
+            }
+
             $reviews[] = array(
                 'review_id' => $review_id,
                 'author_name' => $author_name,
@@ -284,6 +298,7 @@ class RicReviews_API
                 'text' => isset($text_object['text']) ? $text_object['text'] : '',
                 'time' => $time,
                 'relative_time_description' => isset($review['relativePublishTimeDescription']) ? $review['relativePublishTimeDescription'] : '',
+                'language' => $review_language,
             );
         }
 

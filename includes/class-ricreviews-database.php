@@ -60,13 +60,15 @@ class RicReviews_Database {
             text TEXT,
             time INT(11) UNSIGNED NOT NULL,
             relative_time_description VARCHAR(100),
+            language VARCHAR(10),
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             UNIQUE KEY review_id (review_id),
             KEY place_id (place_id),
             KEY rating (rating),
-            KEY time (time)
+            KEY time (time),
+            KEY language (language)
         ) ENGINE=InnoDB {$charset_collate};";
         
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -104,6 +106,7 @@ class RicReviews_Database {
                 'text' => isset($review['text']) ? wp_kses_post($review['text']) : null,
                 'time' => absint($review['time']),
                 'relative_time_description' => isset($review['relative_time_description']) ? sanitize_text_field($review['relative_time_description']) : null,
+                'language' => isset($review['language']) ? sanitize_text_field($review['language']) : null,
             );
             
             // Check if review already exists
@@ -118,7 +121,7 @@ class RicReviews_Database {
                     $this->table_name,
                     $data,
                     array('review_id' => $review_id),
-                    array('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s'),
+                    array('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s'),
                     array('%s')
                 );
             } else {
@@ -126,7 +129,7 @@ class RicReviews_Database {
                 $result = $wpdb->insert(
                     $this->table_name,
                     $data,
-                    array('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s')
+                    array('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s')
                 );
             }
             
