@@ -22,6 +22,8 @@ $options = array(
     'ricreviews_order',
     'ricreviews_primary_color',
     'ricreviews_theme',
+    'ricreviews_languages',
+    'ricreviews_last_fetch',
 );
 
 foreach ($options as $option) {

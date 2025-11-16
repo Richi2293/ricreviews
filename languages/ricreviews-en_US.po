@@ -1,0 +1,379 @@
+# English (US) translation for RicReviews
+# Copyright (C) 2025 Riccardo Lorenzi
+# This file is distributed under the same license as the RicReviews plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: RicReviews 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/Richi2293/ricreviews\n"
+"POT-Creation-Date: 2025-01-16 12:00+0000\n"
+"PO-Revision-Date: 2025-01-16 12:00+0000\n"
+"Last-Translator: Riccardo Lorenzi\n"
+"Language-Team: English (US)\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: includes/class-ricreviews-admin.php:35
+msgid "RicReviews Settings"
+msgstr "RicReviews Settings"
+
+#: includes/class-ricreviews-admin.php:36
+msgid "RicReviews"
+msgstr "RicReviews"
+
+#: includes/class-ricreviews-admin.php:120
+msgid "You do not have sufficient permissions to access this page."
+msgstr "You do not have sufficient permissions to access this page."
+
+#: includes/class-ricreviews-admin.php:143
+msgid "ℹ️ Important Information:"
+msgstr "ℹ️ Important Information:"
+
+#: includes/class-ricreviews-admin.php:146
+msgid "Google Places API returns a maximum of 5 reviews per place. This is a limitation imposed by Google, not by the plugin."
+msgstr "Google Places API returns a maximum of 5 reviews per place. This is a limitation imposed by Google, not by the plugin."
+
+#: includes/class-ricreviews-admin.php:149
+msgid "The plugin performs periodic fetches (every 24 hours) to update reviews. Over time, you may accumulate more reviews in the database as Google updates the \"5 most helpful reviews\" for your place."
+msgstr "The plugin performs periodic fetches (every 24 hours) to update reviews. Over time, you may accumulate more reviews in the database as Google updates the \"5 most helpful reviews\" for your place."
+
+#: includes/class-ricreviews-admin.php:152
+msgid "To get all reviews:"
+msgstr "To get all reviews:"
+
+#: includes/class-ricreviews-admin.php:153
+msgid "If you are the owner of the business, you can use Google My Business API to access all reviews. Otherwise, this limitation is unavoidable with Google's official APIs."
+msgstr "If you are the owner of the business, you can use Google My Business API to access all reviews. Otherwise, this limitation is unavoidable with Google's official APIs."
+
+#: includes/class-ricreviews-admin.php:157
+msgid "Read Google's official documentation →"
+msgstr "Read Google's official documentation →"
+
+#: includes/class-ricreviews-admin.php:168
+msgid "Google Places API Key"
+msgstr "Google Places API Key"
+
+#: includes/class-ricreviews-admin.php:180
+msgid "Enter your Google Places API key. Get one from"
+msgstr "Enter your Google Places API key. Get one from"
+
+#: includes/class-ricreviews-admin.php:182
+msgid "Google Cloud Console"
+msgstr "Google Cloud Console"
+
+#: includes/class-ricreviews-admin.php:186
+msgid "Important:"
+msgstr "Important:"
+
+#: includes/class-ricreviews-admin.php:188
+msgid "You must enable"
+msgstr "You must enable"
+
+#: includes/class-ricreviews-admin.php:189
+msgid "Places API (New)"
+msgstr "Places API (New)"
+
+#: includes/class-ricreviews-admin.php:190
+msgid "in your Google Cloud Console. The legacy Places API is no longer available for new projects."
+msgstr "in your Google Cloud Console. The legacy Places API is no longer available for new projects."
+
+#: includes/class-ricreviews-admin.php:193
+msgid "Enable Places API (New) →"
+msgstr "Enable Places API (New) →"
+
+#: includes/class-ricreviews-admin.php:202
+msgid "Place ID"
+msgstr "Place ID"
+
+#: includes/class-ricreviews-admin.php:215
+msgid "Enter the Google Place ID for the location you want to display reviews for."
+msgstr "Enter the Google Place ID for the location you want to display reviews for."
+
+#: includes/class-ricreviews-admin.php:217
+msgid "How to find your Place ID:"
+msgstr "How to find your Place ID:"
+
+#: includes/class-ricreviews-admin.php:219
+msgid "Go to"
+msgstr "Go to"
+
+#: includes/class-ricreviews-admin.php:219
+msgid "Google Maps"
+msgstr "Google Maps"
+
+#: includes/class-ricreviews-admin.php:219
+msgid "and search for your business location"
+msgstr "and search for your business location"
+
+#: includes/class-ricreviews-admin.php:220
+msgid "Click on your business in the search results or on the map"
+msgstr "Click on your business in the search results or on the map"
+
+#: includes/class-ricreviews-admin.php:221
+msgid "In the business information panel, scroll down and look for the Place ID (it looks like: ChIJN1t_tDeuEmsRUsoyG83frY4)"
+msgstr "In the business information panel, scroll down and look for the Place ID (it looks like: ChIJN1t_tDeuEmsRUsoyG83frY4)"
+
+#: includes/class-ricreviews-admin.php:222
+msgid "Alternatively, use the"
+msgstr "Alternatively, use the"
+
+#: includes/class-ricreviews-admin.php:222
+msgid "Place ID Finder tool"
+msgstr "Place ID Finder tool"
+
+#: includes/class-ricreviews-admin.php:222
+msgid "from Google"
+msgstr "from Google"
+
+#: includes/class-ricreviews-admin.php:225
+msgid "Learn more about Place IDs →"
+msgstr "Learn more about Place IDs →"
+
+#: includes/class-ricreviews-admin.php:233
+msgid "Number of Reviews"
+msgstr "Number of Reviews"
+
+#: includes/class-ricreviews-admin.php:243
+msgid "Select how many reviews to display."
+msgstr "Select how many reviews to display."
+
+#: includes/class-ricreviews-admin.php:250
+msgid "Sort By"
+msgstr "Sort By"
+
+#: includes/class-ricreviews-admin.php:255
+msgid "Most Recent"
+msgstr "Most Recent"
+
+#: includes/class-ricreviews-admin.php:258
+msgid "Oldest First"
+msgstr "Oldest First"
+
+#: includes/class-ricreviews-admin.php:261
+msgid "Highest Rating"
+msgstr "Highest Rating"
+
+#: includes/class-ricreviews-admin.php:265
+msgid "Select how to sort the reviews."
+msgstr "Select how to sort the reviews."
+
+#: includes/class-ricreviews-admin.php:272
+msgid "Primary Color"
+msgstr "Primary Color"
+
+#: includes/class-ricreviews-admin.php:282
+msgid "Choose the primary color for the reviews display."
+msgstr "Choose the primary color for the reviews display."
+
+#: includes/class-ricreviews-admin.php:289
+msgid "Theme"
+msgstr "Theme"
+
+#: includes/class-ricreviews-admin.php:294
+msgid "Light"
+msgstr "Light"
+
+#: includes/class-ricreviews-admin.php:297
+msgid "Dark"
+msgstr "Dark"
+
+#: includes/class-ricreviews-admin.php:301
+msgid "Select the theme for the reviews display."
+msgstr "Select the theme for the reviews display."
+
+#: includes/class-ricreviews-admin.php:307
+msgid "Save Settings"
+msgstr "Save Settings"
+
+#: includes/class-ricreviews-admin.php:311
+msgid "Usage"
+msgstr "Usage"
+
+#: includes/class-ricreviews-admin.php:313
+msgid "Use the following shortcode to display reviews on any page or post:"
+msgstr "Use the following shortcode to display reviews on any page or post:"
+
+#: includes/class-ricreviews-admin.php:345
+msgid "Reviews Preview"
+msgstr "Reviews Preview"
+
+#: includes/class-ricreviews-admin.php:350
+msgid "No reviews found."
+msgstr "No reviews found."
+
+#: includes/class-ricreviews-admin.php:353
+msgid "Make sure you have:"
+msgstr "Make sure you have:"
+
+#: includes/class-ricreviews-admin.php:356
+msgid "Entered a valid Place ID"
+msgstr "Entered a valid Place ID"
+
+#: includes/class-ricreviews-admin.php:357
+msgid "Entered a valid API key with Places API (New) enabled"
+msgstr "Entered a valid API key with Places API (New) enabled"
+
+#: includes/class-ricreviews-admin.php:358
+msgid "Saved the settings to fetch reviews"
+msgstr "Saved the settings to fetch reviews"
+
+#: includes/class-ricreviews-admin.php:362
+msgid "Fetch Reviews Now"
+msgstr "Fetch Reviews Now"
+
+#: includes/class-ricreviews-admin.php:367
+msgid "Debug Information"
+msgstr "Debug Information"
+
+#: includes/class-ricreviews-admin.php:375
+msgid "review(s) found in database."
+msgstr "review(s) found in database."
+
+#: includes/class-ricreviews-admin.php:380
+msgid "Note:"
+msgstr "Note:"
+
+#: includes/class-ricreviews-admin.php:381
+msgid "Google Places API returns a maximum of 5 reviews per fetch. The plugin automatically updates reviews every 24 hours via cron job."
+msgstr "Google Places API returns a maximum of 5 reviews per fetch. The plugin automatically updates reviews every 24 hours via cron job."
+
+#: includes/class-ricreviews-admin.php:505
+msgid "Settings saved successfully."
+msgstr "Settings saved successfully."
+
+#: includes/class-ricreviews-admin.php:527
+#: includes/class-ricreviews-admin.php:556
+msgid "You do not have permission to perform this action."
+msgstr "You do not have permission to perform this action."
+
+#: includes/class-ricreviews-admin.php:534
+#: includes/class-ricreviews-admin.php:563
+msgid "API key and Place ID are required."
+msgstr "API key and Place ID are required."
+
+#: includes/class-ricreviews-admin.php:544
+msgid "API key is valid."
+msgstr "API key is valid."
+
+#: includes/class-ricreviews-admin.php:589
+msgid "No reviews found for this Place ID."
+msgstr "No reviews found for this Place ID."
+
+#: includes/class-ricreviews-admin.php:601
+msgid "Successfully fetched %d review(s)."
+msgstr "Successfully fetched %d review(s)."
+
+#: includes/class-ricreviews-api.php:43
+msgid "Place ID and API key are required."
+msgstr "Place ID and API key are required."
+
+#: includes/class-ricreviews-api.php:138
+msgid "Request failed: %s"
+msgstr "Request failed: %s"
+
+#: includes/class-ricreviews-api.php:159
+msgid "Google Places API rate limit exceeded. Please try again later."
+msgstr "Google Places API rate limit exceeded. Please try again later."
+
+#: includes/class-ricreviews-api.php:164
+msgid "Invalid Google Places API key or Places API (New) is not enabled."
+msgstr "Invalid Google Places API key or Places API (New) is not enabled."
+
+#: includes/class-ricreviews-api.php:169
+#: includes/class-ricreviews-api.php:229
+msgid "You need to enable Places API (New) in your Google Cloud Console. The legacy API is no longer available for new projects."
+msgstr "You need to enable Places API (New) in your Google Cloud Console. The legacy API is no longer available for new projects."
+
+#: includes/class-ricreviews-api.php:177
+msgid "Invalid Google Place ID."
+msgstr "Invalid Google Place ID."
+
+#: includes/class-ricreviews-api.php:202
+msgid "Google Places API returned error code: %d"
+msgstr "Google Places API returned error code: %d"
+
+#: includes/class-ricreviews-api.php:219
+msgid "Failed to parse API response."
+msgstr "Failed to parse API response."
+
+#: includes/class-ricreviews-api.php:224
+msgid "Unknown API error."
+msgstr "Unknown API error."
+
+#: includes/class-ricreviews-api.php:295
+msgid "API key cannot be empty."
+msgstr "API key cannot be empty."
+
+#: includes/class-ricreviews-api.php:319
+msgid "API key format appears invalid."
+msgstr "API key format appears invalid."
+
+#: includes/class-ricreviews-shortcode.php:43
+msgid "Please configure RicReviews settings in WordPress admin."
+msgstr "Please configure RicReviews settings in WordPress admin."
+
+#: includes/class-ricreviews-shortcode.php:50
+msgid "No reviews available at this time."
+msgstr "No reviews available at this time."
+
+#: includes/class-ricreviews-admin.php:268
+msgid "Additional Languages (Optional)"
+msgstr "Additional Languages (Optional)"
+
+#: includes/class-ricreviews-admin.php:280
+msgid "Enter additional language codes separated by commas (e.g., \"en,fr,de\"). The plugin will fetch reviews in these languages in addition to the default language."
+msgstr "Enter additional language codes separated by commas (e.g., \"en,fr,de\"). The plugin will fetch reviews in these languages in addition to the default language."
+
+#: includes/class-ricreviews-admin.php:283
+msgid "Each language requires a separate API call. Leave empty to use only the default language (based on WordPress locale)."
+msgstr "Each language requires a separate API call. Leave empty to use only the default language (based on WordPress locale)."
+
+#: includes/class-ricreviews-admin.php:374
+msgid "Shortcode Parameters:"
+msgstr "Shortcode Parameters:"
+
+#: includes/class-ricreviews-admin.php:377
+msgid "Number of reviews to display (default: from settings)"
+msgstr "Number of reviews to display (default: from settings)"
+
+#: includes/class-ricreviews-admin.php:378
+msgid "Sort by: time, time_asc, rating (default: from settings)"
+msgstr "Sort by: time, time_asc, rating (default: from settings)"
+
+#: includes/class-ricreviews-admin.php:379
+msgid "Order direction: ASC or DESC (default: from settings)"
+msgstr "Order direction: ASC or DESC (default: from settings)"
+
+#: includes/class-ricreviews-admin.php:380
+msgid "Language code to filter reviews (e.g., \"it\", \"en\"). If not specified, uses WordPress locale (default)"
+msgstr "Language code to filter reviews (e.g., \"it\", \"en\"). If not specified, uses WordPress locale (default)"
+
+#: includes/class-ricreviews-admin.php:383
+msgid "Examples:"
+msgstr "Examples:"
+
+#: includes/class-ricreviews-admin.php:386
+msgid "Display reviews with default settings and WordPress locale"
+msgstr "Display reviews with default settings and WordPress locale"
+
+#: includes/class-ricreviews-admin.php:387
+msgid "Display only English reviews"
+msgstr "Display only English reviews"
+
+#: includes/class-ricreviews-admin.php:388
+msgid "Display 5 Italian reviews"
+msgstr "Display 5 Italian reviews"
+
+#: includes/class-ricreviews-api.php:332
+msgid "Languages must be a non-empty array."
+msgstr "Languages must be a non-empty array."
+
+#: includes/class-ricreviews-admin.php:427
+msgid "Last fetch:"
+msgstr "Last fetch:"
+
+#: includes/class-ricreviews-admin.php:438
+msgid "ago"
+msgstr "ago"

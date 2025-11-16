@@ -66,7 +66,24 @@ class RicReviews_Cron {
         }
         
         $api = new RicReviews_API();
-        $reviews = $api->fetch_reviews($place_id, $api_key);
+        
+        // Get languages configuration
+        $languages_config = get_option('ricreviews_languages', '');
+        $languages_array = array();
+        
+        if (!empty($languages_config)) {
+            // Parse comma-separated languages
+            $languages_array = array_map('trim', explode(',', $languages_config));
+            $languages_array = array_filter($languages_array);
+        }
+        
+        // If multiple languages configured, use multiple language fetch
+        if (!empty($languages_array)) {
+            $reviews = $api->fetch_reviews_multiple_languages($place_id, $api_key, $languages_array);
+        } else {
+            // Single language fetch (uses WordPress locale)
+            $reviews = $api->fetch_reviews($place_id, $api_key);
+        }
         
         if (is_wp_error($reviews)) {
             error_log('RicReviews Cron Error: ' . $reviews->get_error_message());
@@ -81,6 +98,9 @@ class RicReviews_Cron {
             // Update cache
             $cache = new RicReviews_Cache();
             $cache->set_cached_reviews($place_id, $reviews);
+            
+            // Update last fetch timestamp
+            update_option('ricreviews_last_fetch', current_time('mysql'));
         }
     }
 }

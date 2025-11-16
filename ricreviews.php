@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: RicReviews
- * Plugin URI: https://github.com/riccardo/ricreviews
+ * Plugin URI: https://github.com/Richi2293/ricreviews
  * Description: Display Google Places reviews on your WordPress site using a simple shortcode.
  * Version: 1.0.0
- * Author: Riccardo
- * Author URI: https://github.com/riccardo
+ * Author: Riccardo Lorenzi
+ * Author URI: https://github.com/Richi2293
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: ricreviews
@@ -138,6 +138,13 @@ class RicReviews {
      * Initialize plugin components
      */
     public function init() {
+        // Load plugin text domain for translations
+        load_plugin_textdomain(
+            'ricreviews',
+            false,
+            dirname(RICREVIEWS_PLUGIN_BASENAME) . '/languages'
+        );
+        
         // Initialize admin
         if (is_admin()) {
             new RicReviews_Admin();
@@ -158,7 +165,24 @@ class RicReviews {
      */
     private function perform_initial_fetch($api_key, $place_id) {
         $api = new RicReviews_API();
-        $reviews = $api->fetch_reviews($place_id, $api_key);
+        
+        // Get languages configuration
+        $languages_config = get_option('ricreviews_languages', '');
+        $languages_array = array();
+        
+        if (!empty($languages_config)) {
+            // Parse comma-separated languages
+            $languages_array = array_map('trim', explode(',', $languages_config));
+            $languages_array = array_filter($languages_array);
+        }
+        
+        // If multiple languages configured, use multiple language fetch
+        if (!empty($languages_array)) {
+            $reviews = $api->fetch_reviews_multiple_languages($place_id, $api_key, $languages_array);
+        } else {
+            // Single language fetch (uses WordPress locale)
+            $reviews = $api->fetch_reviews($place_id, $api_key);
+        }
         
         if (!is_wp_error($reviews) && !empty($reviews)) {
             // Save to database
@@ -168,6 +192,9 @@ class RicReviews {
             // Update cache
             $cache = new RicReviews_Cache();
             $cache->set_cached_reviews($place_id, $reviews);
+            
+            // Update last fetch timestamp
+            update_option('ricreviews_last_fetch', current_time('mysql'));
         }
     }
 }

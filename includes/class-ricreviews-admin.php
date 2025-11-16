@@ -24,6 +24,7 @@ class RicReviews_Admin {
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_notices', array($this, 'display_admin_notices'));
         add_action('wp_ajax_ricreviews_validate_api_key', array($this, 'ajax_validate_api_key'));
+        add_action('wp_ajax_ricreviews_fetch_reviews', array($this, 'ajax_fetch_reviews'));
     }
     
     /**
@@ -78,6 +79,40 @@ class RicReviews_Admin {
             'sanitize_callback' => 'sanitize_text_field',
             'default' => 'light',
         ));
+        
+        register_setting('ricreviews_settings', 'ricreviews_languages', array(
+            'sanitize_callback' => array($this, 'sanitize_languages'),
+            'default' => '',
+        ));
+    }
+    
+    /**
+     * Sanitize languages input (comma-separated language codes)
+     *
+     * @param string $input Raw input
+     * @return string Sanitized languages (comma-separated)
+     */
+    public function sanitize_languages($input) {
+        if (empty($input)) {
+            return '';
+        }
+        
+        // Split by comma and sanitize each language code
+        $languages = explode(',', $input);
+        $sanitized = array();
+        
+        foreach ($languages as $lang) {
+            $lang = trim(sanitize_text_field($lang));
+            if (!empty($lang)) {
+                // Convert to lowercase and keep only letters
+                $lang = strtolower(preg_replace('/[^a-z]/', '', $lang));
+                if (!empty($lang) && strlen($lang) <= 5) {
+                    $sanitized[] = $lang;
+                }
+            }
+        }
+        
+        return implode(',', array_unique($sanitized));
     }
     
     /**
@@ -132,10 +167,32 @@ class RicReviews_Admin {
         $order = get_option('ricreviews_order', 'DESC');
         $primary_color = get_option('ricreviews_primary_color', '#0073aa');
         $theme = get_option('ricreviews_theme', 'light');
+        $languages = get_option('ricreviews_languages', '');
         
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            
+            <div class="notice notice-info is-dismissible" style="margin-top: 20px;">
+                <p>
+                    <strong><?php esc_html_e('ℹ️ Important Information:', 'ricreviews'); ?></strong>
+                </p>
+                <p>
+                    <?php esc_html_e('Google Places API returns a maximum of 5 reviews per place. This is a limitation imposed by Google, not by the plugin.', 'ricreviews'); ?>
+                </p>
+                <p>
+                    <?php esc_html_e('The plugin performs periodic fetches (every 24 hours) to update reviews. Over time, you may accumulate more reviews in the database as Google updates the "5 most helpful reviews" for your place.', 'ricreviews'); ?>
+                </p>
+                <p>
+                    <strong><?php esc_html_e('To get all reviews:', 'ricreviews'); ?></strong>
+                    <?php esc_html_e('If you are the owner of the business, you can use Google My Business API to access all reviews. Otherwise, this limitation is unavoidable with Google\'s official APIs.', 'ricreviews'); ?>
+                </p>
+                <p>
+                    <a href="https://developers.google.com/maps/documentation/places/web-service/policies?hl=it#review-policy" target="_blank" rel="noopener noreferrer">
+                        <?php esc_html_e('Read Google\'s official documentation →', 'ricreviews'); ?>
+                    </a>
+                </p>
+            </div>
             
             <form method="post" action="" class="ricreviews-settings-form">
                 <?php wp_nonce_field('ricreviews_settings_nonce', 'ricreviews_nonce'); ?>
@@ -156,8 +213,19 @@ class RicReviews_Admin {
                             />
                             <p class="description">
                                 <?php esc_html_e('Enter your Google Places API key. Get one from', 'ricreviews'); ?>
-                                <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">
+                                <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener noreferrer">
                                     <?php esc_html_e('Google Cloud Console', 'ricreviews'); ?>
+                                </a>
+                                <br>
+                                <strong style="color: #d63638; display: block; margin-top: 10px;">
+                                    ⚠ <?php esc_html_e('Important:', 'ricreviews'); ?>
+                                </strong>
+                                <?php esc_html_e('You must enable', 'ricreviews'); ?> 
+                                <strong><?php esc_html_e('Places API (New)', 'ricreviews'); ?></strong> 
+                                <?php esc_html_e('in your Google Cloud Console. The legacy Places API is no longer available for new projects.', 'ricreviews'); ?>
+                                <br>
+                                <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener noreferrer">
+                                    <?php esc_html_e('Enable Places API (New) →', 'ricreviews'); ?>
                                 </a>
                             </p>
                             <div id="ricreviews-api-key-validation" class="ricreviews-validation-message"></div>
@@ -176,9 +244,43 @@ class RicReviews_Admin {
                                 value="<?php echo esc_attr($place_id); ?>" 
                                 class="regular-text"
                                 required
+                                placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4"
                             />
                             <p class="description">
                                 <?php esc_html_e('Enter the Google Place ID for the location you want to display reviews for.', 'ricreviews'); ?>
+                                <br>
+                                <strong><?php esc_html_e('How to find your Place ID:', 'ricreviews'); ?></strong>
+                                <ol style="margin: 10px 0; padding-left: 20px;">
+                                    <li><?php esc_html_e('Go to', 'ricreviews'); ?> <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Google Maps', 'ricreviews'); ?></a> <?php esc_html_e('and search for your business location', 'ricreviews'); ?></li>
+                                    <li><?php esc_html_e('Click on your business in the search results or on the map', 'ricreviews'); ?></li>
+                                    <li><?php esc_html_e('In the business information panel, scroll down and look for the Place ID (it looks like: ChIJN1t_tDeuEmsRUsoyG83frY4)', 'ricreviews'); ?></li>
+                                    <li><?php esc_html_e('Alternatively, use the', 'ricreviews'); ?> <a href="https://developers.google.com/maps/documentation/places/web-service/place-id#find-id" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Place ID Finder tool', 'ricreviews'); ?></a> <?php esc_html_e('from Google', 'ricreviews'); ?></li>
+                                </ol>
+                                <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+                                    <?php esc_html_e('Learn more about Place IDs →', 'ricreviews'); ?>
+                                </a>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row">
+                            <label for="ricreviews_languages"><?php esc_html_e('Additional Languages (Optional)', 'ricreviews'); ?></label>
+                        </th>
+                        <td>
+                            <input 
+                                type="text" 
+                                id="ricreviews_languages" 
+                                name="ricreviews_languages" 
+                                value="<?php echo esc_attr($languages); ?>" 
+                                class="regular-text"
+                                placeholder="en,fr,de"
+                            />
+                            <p class="description">
+                                <?php esc_html_e('Enter additional language codes separated by commas (e.g., "en,fr,de"). The plugin will fetch reviews in these languages in addition to the default language.', 'ricreviews'); ?>
+                                <br>
+                                <strong><?php esc_html_e('Note:', 'ricreviews'); ?></strong>
+                                <?php esc_html_e('Each language requires a separate API call. Leave empty to use only the default language (based on WordPress locale).', 'ricreviews'); ?>
                             </p>
                         </td>
                     </tr>
@@ -268,9 +370,178 @@ class RicReviews_Admin {
                     <?php esc_html_e('Use the following shortcode to display reviews on any page or post:', 'ricreviews'); ?>
                 </p>
                 <code>[ricreviews]</code>
+                <p>
+                    <strong><?php esc_html_e('Shortcode Parameters:', 'ricreviews'); ?></strong>
+                </p>
+                <ul style="list-style: disc; margin-left: 20px;">
+                    <li><code>limit</code> - <?php esc_html_e('Number of reviews to display (default: from settings)', 'ricreviews'); ?></li>
+                    <li><code>order_by</code> - <?php esc_html_e('Sort by: time, time_asc, rating (default: from settings)', 'ricreviews'); ?></li>
+                    <li><code>order</code> - <?php esc_html_e('Order direction: ASC or DESC (default: from settings)', 'ricreviews'); ?></li>
+                    <li><code>language</code> - <?php esc_html_e('Language code to filter reviews (e.g., "it", "en"). If not specified, uses WordPress locale (default)', 'ricreviews'); ?></li>
+                </ul>
+                <p>
+                    <strong><?php esc_html_e('Examples:', 'ricreviews'); ?></strong>
+                </p>
+                <ul style="list-style: disc; margin-left: 20px;">
+                    <li><code>[ricreviews]</code> - <?php esc_html_e('Display reviews with default settings and WordPress locale', 'ricreviews'); ?></li>
+                    <li><code>[ricreviews language="en"]</code> - <?php esc_html_e('Display only English reviews', 'ricreviews'); ?></li>
+                    <li><code>[ricreviews limit="5" language="it"]</code> - <?php esc_html_e('Display 5 Italian reviews', 'ricreviews'); ?></li>
+                </ul>
             </div>
+            
+            <?php $this->render_reviews_preview(); ?>
         </div>
         <?php
+    }
+    
+    /**
+     * Render reviews preview in admin
+     *
+     * @return void
+     */
+    private function render_reviews_preview() {
+        $place_id = get_option('ricreviews_place_id', '');
+        
+        if (empty($place_id)) {
+            return;
+        }
+        
+        $database = new RicReviews_Database();
+        $limit = get_option('ricreviews_limit', 10);
+        $order_by = get_option('ricreviews_order_by', 'time');
+        $order = get_option('ricreviews_order', 'DESC');
+        
+        // Get reviews from database
+        $reviews = $database->get_reviews($place_id, $limit, $order_by, $order);
+        
+        // Get last fetch timestamp
+        $last_fetch = get_option('ricreviews_last_fetch', '');
+        
+        ?>
+        <div class="ricreviews-reviews-preview">
+            <h2><?php esc_html_e('Reviews Preview', 'ricreviews'); ?></h2>
+            
+            <?php if (!empty($last_fetch)) : ?>
+                <div class="ricreviews-last-fetch-info" style="margin-bottom: 15px; padding: 10px; background: #f0f0f1; border-left: 4px solid #2271b1; border-radius: 4px;">
+                    <p style="margin: 0;">
+                        <strong><?php esc_html_e('Last fetch:', 'ricreviews'); ?></strong>
+                        <?php 
+                        $last_fetch_timestamp = strtotime($last_fetch);
+                        $formatted_date = date_i18n(
+                            get_option('date_format') . ' ' . get_option('time_format'),
+                            $last_fetch_timestamp
+                        );
+                        echo esc_html($formatted_date);
+                        
+                        // Show relative time
+                        $time_diff = human_time_diff($last_fetch_timestamp, current_time('timestamp'));
+                        echo ' <span style="color: #646970;">(' . esc_html($time_diff . ' ' . __('ago', 'ricreviews')) . ')</span>';
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (empty($reviews)) : ?>
+                <div class="ricreviews-no-reviews">
+                    <p>
+                        <strong><?php esc_html_e('No reviews found.', 'ricreviews'); ?></strong>
+                    </p>
+                    <p>
+                        <?php esc_html_e('Make sure you have:', 'ricreviews'); ?>
+                    </p>
+                    <ul>
+                        <li><?php esc_html_e('Entered a valid Place ID', 'ricreviews'); ?></li>
+                        <li><?php esc_html_e('Entered a valid API key with Places API (New) enabled', 'ricreviews'); ?></li>
+                        <li><?php esc_html_e('Saved the settings to fetch reviews', 'ricreviews'); ?></li>
+                    </ul>
+                    <p>
+                        <button type="button" class="button" id="ricreviews-fetch-now">
+                            <?php esc_html_e('Fetch Reviews Now', 'ricreviews'); ?>
+                        </button>
+                    </p>
+                    <div id="ricreviews-fetch-error" class="ricreviews-fetch-error" style="display: none;"></div>
+                    <div id="ricreviews-debug-info" class="ricreviews-debug-info" style="display: none;">
+                        <h4><?php esc_html_e('Debug Information', 'ricreviews'); ?></h4>
+                        <pre id="ricreviews-debug-content"></pre>
+                    </div>
+                </div>
+            <?php else : ?>
+                <div class="ricreviews-reviews-stats">
+                    <p>
+                        <strong><?php echo esc_html(count($reviews)); ?></strong> 
+                        <?php esc_html_e('review(s) found in database.', 'ricreviews'); ?>
+                    </p>
+                    <?php if (count($reviews) <= 5) : ?>
+                        <div class="notice notice-info inline" style="margin: 10px 0;">
+                            <p>
+                                <strong><?php esc_html_e('Note:', 'ricreviews'); ?></strong>
+                                <?php esc_html_e('Google Places API returns a maximum of 5 reviews per fetch. The plugin automatically updates reviews every 24 hours via cron job.', 'ricreviews'); ?>
+                            </p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="ricreviews-reviews-list">
+                    <?php foreach ($reviews as $review) : ?>
+                        <div class="ricreviews-review-item">
+                            <div class="ricreviews-review-header">
+                                <?php if (!empty($review['profile_photo_url'])) : ?>
+                                    <div class="ricreviews-review-avatar">
+                                        <img src="<?php echo esc_url($review['profile_photo_url']); ?>" 
+                                             alt="<?php echo esc_attr($review['author_name']); ?>" 
+                                             width="40" height="40" />
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="ricreviews-review-author">
+                                    <strong><?php echo esc_html($review['author_name']); ?></strong>
+                                    <div class="ricreviews-review-rating">
+                                        <?php echo $this->render_stars($review['rating']); ?>
+                                        <span class="ricreviews-review-rating-value"><?php echo esc_html($review['rating']); ?>/5</span>
+                                    </div>
+                                    <?php if (!empty($review['relative_time_description'])) : ?>
+                                        <span class="ricreviews-review-time"><?php echo esc_html($review['relative_time_description']); ?></span>
+                                    <?php elseif (!empty($review['time'])) : ?>
+                                        <span class="ricreviews-review-time">
+                                            <?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $review['time'])); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            
+                            <?php if (!empty($review['text'])) : ?>
+                                <div class="ricreviews-review-text">
+                                    <?php echo wp_kses_post($review['text']); ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Render star rating
+     *
+     * @param int $rating Rating value (1-5)
+     * @return string
+     */
+    private function render_stars($rating) {
+        $rating = absint($rating);
+        if ($rating < 1 || $rating > 5) {
+            return '';
+        }
+        
+        $output = '<span class="ricreviews-stars">';
+        for ($i = 1; $i <= 5; $i++) {
+            $class = $i <= $rating ? 'ricreviews-star--filled' : 'ricreviews-star--empty';
+            $output .= '<span class="ricreviews-star ' . esc_attr($class) . '">★</span>';
+        }
+        $output .= '</span>';
+        
+        return $output;
     }
     
     /**
@@ -307,6 +578,7 @@ class RicReviews_Admin {
         update_option('ricreviews_order', $order_by === 'time_asc' ? 'ASC' : 'DESC');
         update_option('ricreviews_primary_color', isset($_POST['ricreviews_primary_color']) ? sanitize_hex_color($_POST['ricreviews_primary_color']) : '#0073aa');
         update_option('ricreviews_theme', isset($_POST['ricreviews_theme']) ? sanitize_text_field($_POST['ricreviews_theme']) : 'light');
+        update_option('ricreviews_languages', isset($_POST['ricreviews_languages']) ? $this->sanitize_languages($_POST['ricreviews_languages']) : '');
         
         // Clear cache when settings are updated
         $cache = new RicReviews_Cache();
@@ -315,13 +587,33 @@ class RicReviews_Admin {
         // Fetch and save reviews if API key and Place ID are set
         if (!empty($api_key) && !empty($place_id)) {
             $api = new RicReviews_API();
-            $reviews = $api->fetch_reviews($place_id, $api_key);
+            
+            // Get languages configuration
+            $languages_config = get_option('ricreviews_languages', '');
+            $languages_array = array();
+            
+            if (!empty($languages_config)) {
+                // Parse comma-separated languages
+                $languages_array = array_map('trim', explode(',', $languages_config));
+                $languages_array = array_filter($languages_array);
+            }
+            
+            // If multiple languages configured, use multiple language fetch
+            if (!empty($languages_array)) {
+                $reviews = $api->fetch_reviews_multiple_languages($place_id, $api_key, $languages_array);
+            } else {
+                // Single language fetch (uses WordPress locale)
+                $reviews = $api->fetch_reviews($place_id, $api_key);
+            }
             
             if (!is_wp_error($reviews) && !empty($reviews)) {
                 $database = new RicReviews_Database();
                 $database->save_reviews($place_id, $reviews);
                 
                 $cache->set_cached_reviews($place_id, $reviews);
+                
+                // Update last fetch timestamp
+                update_option('ricreviews_last_fetch', current_time('mysql'));
             }
         }
         
@@ -368,6 +660,85 @@ class RicReviews_Admin {
         }
         
         wp_send_json_success(array('message' => __('API key is valid.', 'ricreviews')));
+    }
+    
+    /**
+     * AJAX handler for manual review fetch
+     *
+     * @return void
+     */
+    public function ajax_fetch_reviews() {
+        check_ajax_referer('ricreviews_admin_nonce', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => __('You do not have permission to perform this action.', 'ricreviews')));
+        }
+        
+        $api_key = get_option('ricreviews_api_key');
+        $place_id = get_option('ricreviews_place_id');
+        
+        if (empty($api_key) || empty($place_id)) {
+            wp_send_json_error(array('message' => __('API key and Place ID are required.', 'ricreviews')));
+        }
+        
+        $api = new RicReviews_API();
+        
+        // Get languages configuration
+        $languages_config = get_option('ricreviews_languages', '');
+        $languages_array = array();
+        
+        if (!empty($languages_config)) {
+            // Parse comma-separated languages
+            $languages_array = array_map('trim', explode(',', $languages_config));
+            $languages_array = array_filter($languages_array);
+        }
+        
+        // If multiple languages configured, use multiple language fetch
+        if (!empty($languages_array)) {
+            $reviews = $api->fetch_reviews_multiple_languages($place_id, $api_key, $languages_array);
+        } else {
+            // Single language fetch (uses WordPress locale)
+            $reviews = $api->fetch_reviews($place_id, $api_key);
+        }
+        
+        if (is_wp_error($reviews)) {
+            $error_message = $reviews->get_error_message();
+            $error_code = $reviews->get_error_code();
+            
+            // Add more context for debugging
+            $debug_info = '';
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                $debug_info = ' | Error Code: ' . $error_code;
+                if ($error_code === 'invalid_place') {
+                    $debug_info .= ' | Place ID: ' . $place_id;
+                }
+            }
+            
+            wp_send_json_error(array(
+                'message' => $error_message . $debug_info,
+                'code' => $error_code
+            ));
+        }
+        
+        if (empty($reviews)) {
+            wp_send_json_error(array('message' => __('No reviews found for this Place ID.', 'ricreviews')));
+        }
+        
+        // Save to database
+        $database = new RicReviews_Database();
+        $database->save_reviews($place_id, $reviews);
+        
+        // Update cache
+        $cache = new RicReviews_Cache();
+        $cache->set_cached_reviews($place_id, $reviews);
+        
+        // Update last fetch timestamp
+        update_option('ricreviews_last_fetch', current_time('mysql'));
+        
+        wp_send_json_success(array(
+            'message' => sprintf(__('Successfully fetched %d review(s).', 'ricreviews'), count($reviews)),
+            'count' => count($reviews)
+        ));
     }
 }
 
