@@ -1,6 +1,7 @@
 # RicReviews
 
-A WordPress plugin that displays Google Places reviews on your website using a simple shortcode. RicReviews fetches reviews from Google Places API (New) and displays them beautifully on your WordPress site.
+A WordPress plugin that displays Google Places reviews on your website using a simple shortcode.  
+RicReviews fetches reviews from Google Places API (New) and displays them beautifully on your WordPress site.
 
 ## Features
 
