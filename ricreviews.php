@@ -138,6 +138,13 @@ class RicReviews {
      * Initialize plugin components
      */
     public function init() {
+        // Load plugin text domain for translations
+        load_plugin_textdomain(
+            'ricreviews',
+            false,
+            dirname(RICREVIEWS_PLUGIN_BASENAME) . '/languages'
+        );
+        
         // Initialize admin
         if (is_admin()) {
             new RicReviews_Admin();
