@@ -317,3 +317,63 @@ msgstr "Configura le impostazioni di RicReviews nell'admin di WordPress."
 #: includes/class-ricreviews-shortcode.php:50
 msgid "No reviews available at this time."
 msgstr "Nessuna recensione disponibile al momento."
+
+#: includes/class-ricreviews-admin.php:268
+msgid "Additional Languages (Optional)"
+msgstr "Lingue Aggiuntive (Opzionale)"
+
+#: includes/class-ricreviews-admin.php:280
+msgid "Enter additional language codes separated by commas (e.g., \"en,fr,de\"). The plugin will fetch reviews in these languages in addition to the default language."
+msgstr "Inserisci codici lingua aggiuntivi separati da virgole (es. \"en,fr,de\"). Il plugin recupererà le recensioni in queste lingue oltre alla lingua predefinita."
+
+#: includes/class-ricreviews-admin.php:283
+msgid "Each language requires a separate API call. Leave empty to use only the default language (based on WordPress locale)."
+msgstr "Ogni lingua richiede una chiamata API separata. Lascia vuoto per usare solo la lingua predefinita (basata sulla locale WordPress)."
+
+#: includes/class-ricreviews-admin.php:374
+msgid "Shortcode Parameters:"
+msgstr "Parametri dello Shortcode:"
+
+#: includes/class-ricreviews-admin.php:377
+msgid "Number of reviews to display (default: from settings)"
+msgstr "Numero di recensioni da visualizzare (predefinito: dalle impostazioni)"
+
+#: includes/class-ricreviews-admin.php:378
+msgid "Sort by: time, time_asc, rating (default: from settings)"
+msgstr "Ordina per: time, time_asc, rating (predefinito: dalle impostazioni)"
+
+#: includes/class-ricreviews-admin.php:379
+msgid "Order direction: ASC or DESC (default: from settings)"
+msgstr "Direzione ordine: ASC o DESC (predefinito: dalle impostazioni)"
+
+#: includes/class-ricreviews-admin.php:380
+msgid "Language code to filter reviews (e.g., \"it\", \"en\"). If not specified, uses WordPress locale (default)"
+msgstr "Codice lingua per filtrare le recensioni (es. \"it\", \"en\"). Se non specificato, usa la locale WordPress (predefinito)"
+
+#: includes/class-ricreviews-admin.php:383
+msgid "Examples:"
+msgstr "Esempi:"
+
+#: includes/class-ricreviews-admin.php:386
+msgid "Display reviews with default settings and WordPress locale"
+msgstr "Visualizza recensioni con impostazioni predefinite e locale WordPress"
+
+#: includes/class-ricreviews-admin.php:387
+msgid "Display only English reviews"
+msgstr "Visualizza solo recensioni in inglese"
+
+#: includes/class-ricreviews-admin.php:388
+msgid "Display 5 Italian reviews"
+msgstr "Visualizza 5 recensioni in italiano"
+
+#: includes/class-ricreviews-api.php:332
+msgid "Languages must be a non-empty array."
+msgstr "Le lingue devono essere un array non vuoto."
+
+#: includes/class-ricreviews-admin.php:427
+msgid "Last fetch:"
+msgstr "Ultimo recupero:"
+
+#: includes/class-ricreviews-admin.php:438
+msgid "ago"
+msgstr "fa"

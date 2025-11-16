@@ -58,9 +58,11 @@ class RicReviews_Database {
             profile_photo_url TEXT,
             rating TINYINT(1) UNSIGNED NOT NULL,
             text TEXT,
+            original_text TEXT,
             time INT(11) UNSIGNED NOT NULL,
             relative_time_description VARCHAR(100),
             language VARCHAR(10),
+            original_language VARCHAR(10),
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -104,9 +106,11 @@ class RicReviews_Database {
                 'profile_photo_url' => isset($review['profile_photo_url']) ? esc_url_raw($review['profile_photo_url']) : null,
                 'rating' => absint($review['rating']),
                 'text' => isset($review['text']) ? wp_kses_post($review['text']) : null,
+                'original_text' => isset($review['original_text']) ? wp_kses_post($review['original_text']) : null,
                 'time' => absint($review['time']),
                 'relative_time_description' => isset($review['relative_time_description']) ? sanitize_text_field($review['relative_time_description']) : null,
                 'language' => isset($review['language']) ? sanitize_text_field($review['language']) : null,
+                'original_language' => isset($review['original_language']) ? sanitize_text_field($review['original_language']) : null,
             );
             
             // Check if review already exists
@@ -121,7 +125,7 @@ class RicReviews_Database {
                     $this->table_name,
                     $data,
                     array('review_id' => $review_id),
-                    array('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s'),
+                    array('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s', '%s'),
                     array('%s')
                 );
             } else {
@@ -129,7 +133,7 @@ class RicReviews_Database {
                 $result = $wpdb->insert(
                     $this->table_name,
                     $data,
-                    array('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s')
+                    array('%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%s', '%s')
                 );
             }
             
@@ -148,9 +152,10 @@ class RicReviews_Database {
      * @param int    $limit    Number of reviews to retrieve
      * @param string $order_by Order by field (time, rating, or created_at)
      * @param string $order    Order direction (ASC or DESC)
+     * @param string $language Optional language code to filter reviews (e.g., 'it', 'en')
      * @return array
      */
-    public function get_reviews($place_id, $limit = 10, $order_by = 'time', $order = 'DESC') {
+    public function get_reviews($place_id, $limit = 10, $order_by = 'time', $order = 'DESC', $language = '') {
         global $wpdb;
         
         // Handle time_asc special case
@@ -177,14 +182,26 @@ class RicReviews_Database {
             $limit = 10;
         }
         
+        // Sanitize language code
+        $language = !empty($language) ? sanitize_text_field($language) : '';
+        
+        // Build WHERE clause
+        $where_clause = "WHERE place_id = %s";
+        $where_values = array($place_id);
+        
+        // Add language filter if specified
+        if (!empty($language)) {
+            $where_clause .= " AND language = %s";
+            $where_values[] = $language;
+        }
+        
         // Build safe query - order_by and order are already validated/whitelisted
         $sql = $wpdb->prepare(
             "SELECT * FROM {$this->table_name} 
-            WHERE place_id = %s 
+            {$where_clause}
             ORDER BY " . esc_sql($order_by) . " " . esc_sql($order) . " 
             LIMIT %d",
-            $place_id,
-            $limit
+            array_merge($where_values, array($limit))
         );
         
         $results = $wpdb->get_results($sql, ARRAY_A);

@@ -35,6 +35,7 @@ class RicReviews_Shortcode {
             'limit' => get_option('ricreviews_limit', 10),
             'order_by' => get_option('ricreviews_order_by', 'time'),
             'order' => get_option('ricreviews_order', 'DESC'),
+            'language' => '', // Empty means use WordPress locale
         ), $atts, 'ricreviews');
         
         $place_id = get_option('ricreviews_place_id');
@@ -43,8 +44,23 @@ class RicReviews_Shortcode {
             return '<p>' . esc_html__('Please configure RicReviews settings in WordPress admin.', 'ricreviews') . '</p>';
         }
         
+        // Get language code - if not specified, use WordPress locale
+        $language = '';
+        if (!empty($atts['language'])) {
+            $language = sanitize_text_field($atts['language']);
+        } else {
+            // Convert WordPress locale to language code (e.g., 'it_IT' -> 'it')
+            $locale = get_locale();
+            if (!empty($locale)) {
+                $lang_parts = explode('_', $locale);
+                if (!empty($lang_parts[0])) {
+                    $language = strtolower($lang_parts[0]);
+                }
+            }
+        }
+        
         // Get reviews
-        $reviews = $this->get_reviews($place_id, absint($atts['limit']), $atts['order_by'], $atts['order']);
+        $reviews = $this->get_reviews($place_id, absint($atts['limit']), $atts['order_by'], $atts['order'], $language);
         
         if (empty($reviews)) {
             return '<p>' . esc_html__('No reviews available at this time.', 'ricreviews') . '</p>';
@@ -64,23 +80,33 @@ class RicReviews_Shortcode {
      * @param int    $limit    Number of reviews
      * @param string $order_by Order by field
      * @param string $order    Order direction
+     * @param string $language Optional language code to filter reviews
      * @return array
      */
-    private function get_reviews($place_id, $limit, $order_by, $order) {
-        // Try cache first
+    private function get_reviews($place_id, $limit, $order_by, $order, $language = '') {
+        // Try database first (with language filter if specified)
+        $database = new RicReviews_Database();
+        $db_reviews = $database->get_reviews($place_id, $limit, $order_by, $order, $language);
+        
+        if (!empty($db_reviews)) {
+            return $db_reviews;
+        }
+        
+        // Try cache (but filter by language if specified)
         $cache = new RicReviews_Cache();
         $cached_reviews = $cache->get_cached_reviews($place_id);
         
         if (!empty($cached_reviews)) {
-            return $this->apply_sorting_and_limit($cached_reviews, $limit, $order_by, $order);
-        }
-        
-        // Try database
-        $database = new RicReviews_Database();
-        $db_reviews = $database->get_reviews($place_id, $limit, $order_by, $order);
-        
-        if (!empty($db_reviews)) {
-            return $db_reviews;
+            // Filter cached reviews by language if specified
+            if (!empty($language)) {
+                $cached_reviews = array_filter($cached_reviews, function($review) use ($language) {
+                    return isset($review['language']) && $review['language'] === $language;
+                });
+            }
+            
+            if (!empty($cached_reviews)) {
+                return $this->apply_sorting_and_limit($cached_reviews, $limit, $order_by, $order);
+            }
         }
         
         // Fallback to API fetch
@@ -90,7 +116,10 @@ class RicReviews_Shortcode {
         }
         
         $api = new RicReviews_API();
-        $reviews = $api->fetch_reviews($place_id, $api_key);
+        
+        // Always use single language fetch in shortcode
+        // If language is specified, use it; otherwise use WordPress locale
+        $reviews = $api->fetch_reviews($place_id, $api_key, $language);
         
         if (is_wp_error($reviews) || empty($reviews)) {
             return array();
@@ -99,6 +128,13 @@ class RicReviews_Shortcode {
         // Save to database and cache
         $database->save_reviews($place_id, $reviews);
         $cache->set_cached_reviews($place_id, $reviews);
+        
+        // Filter by language if specified in shortcode
+        if (!empty($language)) {
+            $reviews = array_filter($reviews, function($review) use ($language) {
+                return isset($review['language']) && $review['language'] === $language;
+            });
+        }
         
         return $this->apply_sorting_and_limit($reviews, $limit, $order_by, $order);
     }

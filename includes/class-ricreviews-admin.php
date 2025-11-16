@@ -79,6 +79,40 @@ class RicReviews_Admin {
             'sanitize_callback' => 'sanitize_text_field',
             'default' => 'light',
         ));
+        
+        register_setting('ricreviews_settings', 'ricreviews_languages', array(
+            'sanitize_callback' => array($this, 'sanitize_languages'),
+            'default' => '',
+        ));
+    }
+    
+    /**
+     * Sanitize languages input (comma-separated language codes)
+     *
+     * @param string $input Raw input
+     * @return string Sanitized languages (comma-separated)
+     */
+    public function sanitize_languages($input) {
+        if (empty($input)) {
+            return '';
+        }
+        
+        // Split by comma and sanitize each language code
+        $languages = explode(',', $input);
+        $sanitized = array();
+        
+        foreach ($languages as $lang) {
+            $lang = trim(sanitize_text_field($lang));
+            if (!empty($lang)) {
+                // Convert to lowercase and keep only letters
+                $lang = strtolower(preg_replace('/[^a-z]/', '', $lang));
+                if (!empty($lang) && strlen($lang) <= 5) {
+                    $sanitized[] = $lang;
+                }
+            }
+        }
+        
+        return implode(',', array_unique($sanitized));
     }
     
     /**
@@ -133,6 +167,7 @@ class RicReviews_Admin {
         $order = get_option('ricreviews_order', 'DESC');
         $primary_color = get_option('ricreviews_primary_color', '#0073aa');
         $theme = get_option('ricreviews_theme', 'light');
+        $languages = get_option('ricreviews_languages', '');
         
         ?>
         <div class="wrap">
@@ -230,6 +265,28 @@ class RicReviews_Admin {
                     
                     <tr>
                         <th scope="row">
+                            <label for="ricreviews_languages"><?php esc_html_e('Additional Languages (Optional)', 'ricreviews'); ?></label>
+                        </th>
+                        <td>
+                            <input 
+                                type="text" 
+                                id="ricreviews_languages" 
+                                name="ricreviews_languages" 
+                                value="<?php echo esc_attr($languages); ?>" 
+                                class="regular-text"
+                                placeholder="en,fr,de"
+                            />
+                            <p class="description">
+                                <?php esc_html_e('Enter additional language codes separated by commas (e.g., "en,fr,de"). The plugin will fetch reviews in these languages in addition to the default language.', 'ricreviews'); ?>
+                                <br>
+                                <strong><?php esc_html_e('Note:', 'ricreviews'); ?></strong>
+                                <?php esc_html_e('Each language requires a separate API call. Leave empty to use only the default language (based on WordPress locale).', 'ricreviews'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th scope="row">
                             <label for="ricreviews_limit"><?php esc_html_e('Number of Reviews', 'ricreviews'); ?></label>
                         </th>
                         <td>
@@ -313,6 +370,23 @@ class RicReviews_Admin {
                     <?php esc_html_e('Use the following shortcode to display reviews on any page or post:', 'ricreviews'); ?>
                 </p>
                 <code>[ricreviews]</code>
+                <p>
+                    <strong><?php esc_html_e('Shortcode Parameters:', 'ricreviews'); ?></strong>
+                </p>
+                <ul style="list-style: disc; margin-left: 20px;">
+                    <li><code>limit</code> - <?php esc_html_e('Number of reviews to display (default: from settings)', 'ricreviews'); ?></li>
+                    <li><code>order_by</code> - <?php esc_html_e('Sort by: time, time_asc, rating (default: from settings)', 'ricreviews'); ?></li>
+                    <li><code>order</code> - <?php esc_html_e('Order direction: ASC or DESC (default: from settings)', 'ricreviews'); ?></li>
+                    <li><code>language</code> - <?php esc_html_e('Language code to filter reviews (e.g., "it", "en"). If not specified, uses WordPress locale (default)', 'ricreviews'); ?></li>
+                </ul>
+                <p>
+                    <strong><?php esc_html_e('Examples:', 'ricreviews'); ?></strong>
+                </p>
+                <ul style="list-style: disc; margin-left: 20px;">
+                    <li><code>[ricreviews]</code> - <?php esc_html_e('Display reviews with default settings and WordPress locale', 'ricreviews'); ?></li>
+                    <li><code>[ricreviews language="en"]</code> - <?php esc_html_e('Display only English reviews', 'ricreviews'); ?></li>
+                    <li><code>[ricreviews limit="5" language="it"]</code> - <?php esc_html_e('Display 5 Italian reviews', 'ricreviews'); ?></li>
+                </ul>
             </div>
             
             <?php $this->render_reviews_preview(); ?>
@@ -340,9 +414,32 @@ class RicReviews_Admin {
         // Get reviews from database
         $reviews = $database->get_reviews($place_id, $limit, $order_by, $order);
         
+        // Get last fetch timestamp
+        $last_fetch = get_option('ricreviews_last_fetch', '');
+        
         ?>
         <div class="ricreviews-reviews-preview">
             <h2><?php esc_html_e('Reviews Preview', 'ricreviews'); ?></h2>
+            
+            <?php if (!empty($last_fetch)) : ?>
+                <div class="ricreviews-last-fetch-info" style="margin-bottom: 15px; padding: 10px; background: #f0f0f1; border-left: 4px solid #2271b1; border-radius: 4px;">
+                    <p style="margin: 0;">
+                        <strong><?php esc_html_e('Last fetch:', 'ricreviews'); ?></strong>
+                        <?php 
+                        $last_fetch_timestamp = strtotime($last_fetch);
+                        $formatted_date = date_i18n(
+                            get_option('date_format') . ' ' . get_option('time_format'),
+                            $last_fetch_timestamp
+                        );
+                        echo esc_html($formatted_date);
+                        
+                        // Show relative time
+                        $time_diff = human_time_diff($last_fetch_timestamp, current_time('timestamp'));
+                        echo ' <span style="color: #646970;">(' . esc_html($time_diff . ' ' . __('ago', 'ricreviews')) . ')</span>';
+                        ?>
+                    </p>
+                </div>
+            <?php endif; ?>
             
             <?php if (empty($reviews)) : ?>
                 <div class="ricreviews-no-reviews">
@@ -481,6 +578,7 @@ class RicReviews_Admin {
         update_option('ricreviews_order', $order_by === 'time_asc' ? 'ASC' : 'DESC');
         update_option('ricreviews_primary_color', isset($_POST['ricreviews_primary_color']) ? sanitize_hex_color($_POST['ricreviews_primary_color']) : '#0073aa');
         update_option('ricreviews_theme', isset($_POST['ricreviews_theme']) ? sanitize_text_field($_POST['ricreviews_theme']) : 'light');
+        update_option('ricreviews_languages', isset($_POST['ricreviews_languages']) ? $this->sanitize_languages($_POST['ricreviews_languages']) : '');
         
         // Clear cache when settings are updated
         $cache = new RicReviews_Cache();
@@ -489,13 +587,33 @@ class RicReviews_Admin {
         // Fetch and save reviews if API key and Place ID are set
         if (!empty($api_key) && !empty($place_id)) {
             $api = new RicReviews_API();
-            $reviews = $api->fetch_reviews($place_id, $api_key);
+            
+            // Get languages configuration
+            $languages_config = get_option('ricreviews_languages', '');
+            $languages_array = array();
+            
+            if (!empty($languages_config)) {
+                // Parse comma-separated languages
+                $languages_array = array_map('trim', explode(',', $languages_config));
+                $languages_array = array_filter($languages_array);
+            }
+            
+            // If multiple languages configured, use multiple language fetch
+            if (!empty($languages_array)) {
+                $reviews = $api->fetch_reviews_multiple_languages($place_id, $api_key, $languages_array);
+            } else {
+                // Single language fetch (uses WordPress locale)
+                $reviews = $api->fetch_reviews($place_id, $api_key);
+            }
             
             if (!is_wp_error($reviews) && !empty($reviews)) {
                 $database = new RicReviews_Database();
                 $database->save_reviews($place_id, $reviews);
                 
                 $cache->set_cached_reviews($place_id, $reviews);
+                
+                // Update last fetch timestamp
+                update_option('ricreviews_last_fetch', current_time('mysql'));
             }
         }
         
@@ -564,7 +682,24 @@ class RicReviews_Admin {
         }
         
         $api = new RicReviews_API();
-        $reviews = $api->fetch_reviews($place_id, $api_key);
+        
+        // Get languages configuration
+        $languages_config = get_option('ricreviews_languages', '');
+        $languages_array = array();
+        
+        if (!empty($languages_config)) {
+            // Parse comma-separated languages
+            $languages_array = array_map('trim', explode(',', $languages_config));
+            $languages_array = array_filter($languages_array);
+        }
+        
+        // If multiple languages configured, use multiple language fetch
+        if (!empty($languages_array)) {
+            $reviews = $api->fetch_reviews_multiple_languages($place_id, $api_key, $languages_array);
+        } else {
+            // Single language fetch (uses WordPress locale)
+            $reviews = $api->fetch_reviews($place_id, $api_key);
+        }
         
         if (is_wp_error($reviews)) {
             $error_message = $reviews->get_error_message();
@@ -596,6 +731,9 @@ class RicReviews_Admin {
         // Update cache
         $cache = new RicReviews_Cache();
         $cache->set_cached_reviews($place_id, $reviews);
+        
+        // Update last fetch timestamp
+        update_option('ricreviews_last_fetch', current_time('mysql'));
         
         wp_send_json_success(array(
             'message' => sprintf(__('Successfully fetched %d review(s).', 'ricreviews'), count($reviews)),

@@ -112,8 +112,25 @@ Display oldest reviews first:
 1. **Initial Fetch**: When you save settings, the plugin fetches reviews from Google Places API
 2. **Database Storage**: Reviews are stored in a custom database table for fast retrieval
 3. **Caching**: Reviews are cached using WordPress transients for 24 hours
-4. **Automatic Updates**: WordPress cron job fetches new reviews every 24 hours
+4. **Automatic Updates**: WordPress cron job automatically fetches new reviews daily
 5. **Display**: Shortcode retrieves reviews from cache/database and displays them
+
+### Automatic Updates (Cron Job)
+
+The plugin uses WordPress's built-in cron system to automatically fetch and update reviews:
+
+- **Schedule**: The cron job is scheduled to run **daily** (every 24 hours)
+- **Activation**: The cron job is automatically scheduled when you activate the plugin
+- **Execution**: The cron runs when WordPress is accessed (page views trigger the cron check)
+- **What it does**: 
+  - Fetches the latest reviews from Google Places API
+  - Updates the database with new or modified reviews
+  - Refreshes the cache with the latest data
+- **Language Support**: If you've configured multiple languages in settings, the cron will fetch reviews for all configured languages
+
+**Important Note**: WordPress cron is not a "real" cron job - it only runs when your site receives traffic. If your site has very low traffic, the cron may not run exactly every 24 hours. For high-traffic sites, the cron will run more reliably on schedule.
+
+**To manually trigger a fetch**: Simply save your settings in **Settings > RicReviews** - this will immediately fetch the latest reviews.
 
 ## Important Limitations
 

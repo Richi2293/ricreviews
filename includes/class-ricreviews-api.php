@@ -38,9 +38,10 @@ class RicReviews_API
      * 
      * @param string $place_id Google Place ID
      * @param string $api_key  Google Places API key
+     * @param string $language Optional language code (e.g., 'it', 'en'). If empty, uses WordPress locale
      * @return array|WP_Error Array of reviews (max 5) or WP_Error on failure
      */
-    public function fetch_reviews($place_id, $api_key)
+    public function fetch_reviews($place_id, $api_key, $language = '')
     {
         if (empty($place_id) || empty($api_key)) {
             return new WP_Error('missing_params', __('Place ID and API key are required.', 'ricreviews'));
@@ -49,90 +50,86 @@ class RicReviews_API
         // Sanitize inputs
         $place_id = sanitize_text_field($place_id);
         $api_key = sanitize_text_field($api_key);
+        $language = !empty($language) ? sanitize_text_field($language) : '';
 
         // Build request URL with place ID
-        // According to Google Places API (New) documentation:
-        // Option 1: GET request with fields parameter
-        // Option 2: POST request with :fetchPlace method
-        // We'll try POST with :fetchPlace first, then fallback to GET if needed
-
-        // Try POST method with :fetchPlace (preferred for complex requests)
-        $url = $this->api_endpoint . $place_id . ':fetchPlace';
-
-        // Prepare request body for Places API (New)
-        // readMask specifies which fields to return
-        // For reviews, we need to specify the full path to review fields
-        // NOTE: Google Places API has a hard limit of 5 reviews per place
-        // There are no parameters to increase this limit (no pagination, no maxResults, etc.)
-        $body = array(
-            'readMask' => 'reviews.rating,reviews.text,reviews.authorAttribution,reviews.publishTime,reviews.relativePublishTimeDescription',
-        );
-
-        // Try to add language code if available (might help with results)
-        $language_code = get_locale();
+        // Using GET method directly as it's more reliable and simpler
+        // According to Google Places API (New) documentation, GET requests work well for reviews
+        
+        // Determine language code to use
         $requested_language = '';
-        if (!empty($language_code)) {
-            // Convert WordPress locale to Google API format (e.g., 'it_IT' -> 'it')
-            $lang = explode('_', $language_code);
-            if (!empty($lang[0])) {
-                $requested_language = strtolower($lang[0]);
-                $body['languageCode'] = $requested_language;
+        $requested_language_full = ''; // Full format (e.g., 'it-IT')
+        $language_source = 'none'; // Track where language code comes from
+        
+        if (!empty($language)) {
+            // Use provided language code
+            $requested_language = strtolower($language);
+            // Try to convert to full format if it's just a 2-letter code
+            // Google Places API prefers full format (e.g., 'it-IT' instead of 'it')
+            if (strlen($requested_language) === 2) {
+                $requested_language_full = $requested_language . '-' . strtoupper($requested_language);
+            } else {
+                $requested_language_full = $requested_language;
+            }
+            $language_source = 'parameter';
+        } else {
+            // Try to add language code from WordPress locale if available
+            $language_code = get_locale();
+            if (!empty($language_code)) {
+                // Convert WordPress locale to Google API format (e.g., 'it_IT' -> 'it-IT')
+                $lang_parts = explode('_', $language_code);
+                if (!empty($lang_parts[0])) {
+                    $requested_language = strtolower($lang_parts[0]);
+                    // Use full format if we have both parts (e.g., 'it_IT' -> 'it-IT')
+                    if (isset($lang_parts[1]) && !empty($lang_parts[1])) {
+                        $requested_language_full = $requested_language . '-' . strtoupper($lang_parts[1]);
+                    } else {
+                        $requested_language_full = $requested_language . '-' . strtoupper($requested_language);
+                    }
+                    $language_source = 'wordpress_locale';
+                }
             }
         }
 
-        $body_json = wp_json_encode($body);
+        // Build GET URL with fields and languageCode parameters
+        // NOTE: Google Places API has a hard limit of 5 reviews per place
+        // There are no parameters to increase this limit (no pagination, no maxResults, etc.)
+        $get_url = $this->api_endpoint . $place_id . '?fields=reviews';
+        
+        // Add languageCode as query parameter if available
+        if (!empty($requested_language_full)) {
+            $get_url .= '&languageCode=' . urlencode($requested_language_full);
+        }
 
         // Log request details (only in debug mode)
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('RicReviews API Request - URL: ' . $url);
-            error_log('RicReviews API Request - Body: ' . $body_json);
+            error_log('RicReviews API Request - URL: ' . $get_url);
             error_log('RicReviews API Request - Place ID: ' . $place_id);
+            error_log('RicReviews API Request - Language Code (short): ' . ($requested_language ?: 'not set'));
+            error_log('RicReviews API Request - Language Code (full): ' . ($requested_language_full ?: 'not set'));
+            error_log('RicReviews API Request - Language Source: ' . $language_source);
+            if (!empty($language)) {
+                error_log('RicReviews API Request - Language Parameter: ' . $language);
+            }
+            if (function_exists('get_locale')) {
+                error_log('RicReviews API Request - WordPress Locale: ' . get_locale());
+            }
         }
 
-        // Make API request using POST method with :fetchPlace
-        $response = wp_remote_post(
-            $url,
+        // Make API request using GET method (more reliable than POST)
+        $response = wp_remote_get(
+            $get_url,
             array(
                 'timeout' => 15,
                 'sslverify' => true,
                 'headers' => array(
-                    'Content-Type' => 'application/json',
                     'X-Goog-Api-Key' => $api_key,
                 ),
-                'body' => $body_json,
             )
         );
 
         // Check response code
         $response_code = wp_remote_retrieve_response_code($response);
-
-        // If we get 404, try GET method as fallback
-        if ($response_code === 404) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('RicReviews API - POST method returned 404, trying GET method');
-            }
-
-            // Try GET method with fields parameter
-            // Note: For GET requests, use 'fields' parameter, not 'readMask'
-            $get_url = $this->api_endpoint . $place_id . '?fields=reviews';
-
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('RicReviews API - Trying GET request: ' . $get_url);
-            }
-
-            $response = wp_remote_get(
-                $get_url,
-                array(
-                    'timeout' => 15,
-                    'sslverify' => true,
-                    'headers' => array(
-                        'X-Goog-Api-Key' => $api_key,
-                    ),
-                )
-            );
-
-            $response_code = wp_remote_retrieve_response_code($response);
-        }
 
         // Check for request errors
         if (is_wp_error($response)) {
@@ -256,9 +253,14 @@ class RicReviews_API
                 ? $review['authorAttribution']
                 : array();
 
-            // Safely extract text object
+            // Safely extract text object (translated text)
             $text_object = isset($review['text']) && is_array($review['text'])
                 ? $review['text']
+                : array();
+
+            // Safely extract originalText object (original text in original language)
+            $original_text_object = isset($review['originalText']) && is_array($review['originalText'])
+                ? $review['originalText']
                 : array();
 
             // Generate review_id from author name and publish time if not available
@@ -289,20 +291,150 @@ class RicReviews_API
                 $review_language = $requested_language;
             }
 
+            // Extract original language from originalText object
+            $original_language = '';
+            if (isset($original_text_object['languageCode'])) {
+                $original_language = sanitize_text_field($original_text_object['languageCode']);
+            }
+
+            // Helper function to normalize language codes for comparison
+            // Converts 'it-IT', 'it', 'IT' to 'it' for comparison
+            $normalize_lang = function($lang) {
+                if (empty($lang)) {
+                    return '';
+                }
+                $lang = strtolower($lang);
+                // Extract base language code (e.g., 'it-IT' -> 'it', 'en-US' -> 'en')
+                $parts = explode('-', $lang);
+                return $parts[0];
+            };
+
+            // Determine which text to use
+            // If requested language doesn't match text language, but matches original language, use original text
+            $text_to_use = isset($text_object['text']) ? $text_object['text'] : '';
+            $language_to_use = $review_language;
+            $use_original = false;
+
+            if (!empty($requested_language)) {
+                $requested_normalized = $normalize_lang($requested_language);
+                $text_normalized = $normalize_lang($review_language);
+                $original_normalized = $normalize_lang($original_language);
+
+                // If text language doesn't match requested, but original does, use original
+                if ($text_normalized !== $requested_normalized && $original_normalized === $requested_normalized) {
+                    if (!empty($original_text_object['text'])) {
+                        $text_to_use = $original_text_object['text'];
+                        $language_to_use = $original_language;
+                        $use_original = true;
+                    }
+                }
+            }
+
+            // Log language codes for each review (only in debug mode)
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    'RicReviews API - Review Language Codes - Review ID: %s | Requested: %s | Text Language: %s | Original Language: %s | Using Original: %s | Final Language: %s',
+                    substr($review_id, 0, 20) . '...',
+                    $requested_language ?: 'not set',
+                    $review_language ?: 'not set',
+                    $original_language ?: 'not set',
+                    $use_original ? 'yes' : 'no',
+                    $language_to_use ?: 'not set'
+                ));
+            }
+
             $reviews[] = array(
                 'review_id' => $review_id,
                 'author_name' => $author_name,
                 'author_url' => isset($author_attribution['uri']) ? $author_attribution['uri'] : '',
                 'profile_photo_url' => isset($author_attribution['photoUri']) ? $author_attribution['photoUri'] : '',
                 'rating' => isset($review['rating']) ? absint($review['rating']) : 0,
-                'text' => isset($text_object['text']) ? $text_object['text'] : '',
+                'text' => $text_to_use,
+                'original_text' => isset($original_text_object['text']) ? $original_text_object['text'] : '',
                 'time' => $time,
                 'relative_time_description' => isset($review['relativePublishTimeDescription']) ? $review['relativePublishTimeDescription'] : '',
-                'language' => $review_language,
+                'language' => $language_to_use,
+                'original_language' => $original_language,
             );
         }
 
+        // Log summary (only in debug mode)
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log(sprintf(
+                'RicReviews API - Response Summary - Requested Language: %s | Reviews Returned: %d',
+                $requested_language ?: 'not set',
+                count($reviews)
+            ));
+        }
+
         return $reviews;
+    }
+
+    /**
+     * Fetch reviews from multiple languages
+     * Makes multiple API calls (one per language) and merges results
+     * 
+     * @param string $place_id Google Place ID
+     * @param string $api_key  Google Places API key
+     * @param array  $languages Array of language codes (e.g., ['it', 'en', 'fr'])
+     * @return array|WP_Error Array of reviews (merged from all languages) or WP_Error on failure
+     */
+    public function fetch_reviews_multiple_languages($place_id, $api_key, $languages = array()) {
+        if (empty($place_id) || empty($api_key)) {
+            return new WP_Error('missing_params', __('Place ID and API key are required.', 'ricreviews'));
+        }
+
+        if (empty($languages) || !is_array($languages)) {
+            return new WP_Error('invalid_languages', __('Languages must be a non-empty array.', 'ricreviews'));
+        }
+
+        $all_reviews = array();
+        $review_ids_seen = array(); // To avoid duplicates
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('RicReviews API - Multiple Languages Request - Languages: ' . implode(', ', $languages));
+        }
+
+        foreach ($languages as $language) {
+            $language = sanitize_text_field($language);
+            if (empty($language)) {
+                continue;
+            }
+
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('RicReviews API - Fetching reviews for language: ' . $language);
+            }
+
+            // Fetch reviews for this language
+            $reviews = $this->fetch_reviews($place_id, $api_key, $language);
+
+            if (is_wp_error($reviews)) {
+                // Log error but continue with other languages
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log('RicReviews - Error fetching reviews for language ' . $language . ': ' . $reviews->get_error_message());
+                }
+                continue;
+            }
+
+            // Merge reviews, avoiding duplicates based on review_id
+            foreach ($reviews as $review) {
+                $review_id = isset($review['review_id']) ? $review['review_id'] : '';
+                
+                if (empty($review_id)) {
+                    // If no review_id, generate one
+                    $review_id = md5($place_id . (isset($review['author_name']) ? $review['author_name'] : '') . (isset($review['time']) ? $review['time'] : ''));
+                    $review['review_id'] = $review_id;
+                }
+
+                // Only add if we haven't seen this review_id before
+                if (!isset($review_ids_seen[$review_id])) {
+                    $all_reviews[] = $review;
+                    $review_ids_seen[$review_id] = true;
+                }
+            }
+        }
+
+        return $all_reviews;
     }
 
     /**
