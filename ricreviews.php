@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: RicReviews
- * Plugin URI: https://github.com/riccardo/ricreviews
+ * Plugin URI: https://github.com/Richi2293/ricreviews
  * Description: Display Google Places reviews on your WordPress site using a simple shortcode.
  * Version: 1.0.0
- * Author: Riccardo
- * Author URI: https://github.com/riccardo
+ * Author: Riccardo Lorenzi
+ * Author URI: https://github.com/Richi2293
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: ricreviews
