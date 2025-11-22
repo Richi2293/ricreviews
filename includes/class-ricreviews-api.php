@@ -26,6 +26,20 @@ class RicReviews_API
     private $api_endpoint = 'https://places.googleapis.com/v1/places/';
 
     /**
+     * Write a message to the plugin logger if available.
+     *
+     * @param string $message Message to log.
+     * @param array  $context Optional context.
+     * @return void
+     */
+    private function log($message, $context = array())
+    {
+        if (class_exists('RicReviews_Logger')) {
+            RicReviews_Logger::log($message, $context);
+        }
+    }
+
+    /**
      * Fetch reviews from Google Places API (New)
      *
      * IMPORTANT LIMITATION: Google Places API returns a maximum of 5 reviews per place.
@@ -101,20 +115,13 @@ class RicReviews_API
             $get_url .= '&languageCode=' . urlencode($requested_language_full);
         }
 
-        // Log request details (only in debug mode)
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('RicReviews API Request - URL: ' . $get_url);
-            error_log('RicReviews API Request - Place ID: ' . $place_id);
-            error_log('RicReviews API Request - Language Code (short): ' . ($requested_language ?: 'not set'));
-            error_log('RicReviews API Request - Language Code (full): ' . ($requested_language_full ?: 'not set'));
-            error_log('RicReviews API Request - Language Source: ' . $language_source);
-            if (!empty($language)) {
-                error_log('RicReviews API Request - Language Parameter: ' . $language);
-            }
-            if (function_exists('get_locale')) {
-                error_log('RicReviews API Request - WordPress Locale: ' . get_locale());
-            }
-        }
+        $this->log('Starting Google Places reviews fetch.', array(
+            'place_id' => $place_id,
+            'language_short' => $requested_language ?: 'not_set',
+            'language_full' => $requested_language_full ?: 'not_set',
+            'language_source' => $language_source,
+            'request_url' => $get_url,
+        ));
 
         // Make API request using GET method (more reliable than POST)
         $response = wp_remote_get(
@@ -128,15 +135,13 @@ class RicReviews_API
             )
         );
 
-        // Check response code
-        $response_code = wp_remote_retrieve_response_code($response);
-
         // Check for request errors
         if (is_wp_error($response)) {
             $error_message = $response->get_error_message();
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('RicReviews API Request Error: ' . $error_message);
-            }
+            $this->log('Google Places API request failed.', array(
+                'place_id' => $place_id,
+                'error' => $error_message,
+            ));
             return new WP_Error('request_error', sprintf(__('Request failed: %s', 'ricreviews'), $error_message));
         }
 
@@ -147,21 +152,15 @@ class RicReviews_API
         $body = wp_remote_retrieve_body($response);
         $data = json_decode($body, true);
 
-        // Log response details (only in debug mode)
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('RicReviews API Response - Code: ' . $response_code);
-            error_log('RicReviews API Response - Body (raw): ' . $body);
-            // Log formatted JSON for better readability
-            if (!empty($data)) {
-                error_log('RicReviews API Response - Body (formatted): ' . wp_json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-            }
-            if (isset($data['error'])) {
-                error_log('RicReviews API Response - Error: ' . wp_json_encode($data['error'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-            }
-        }
+        $this->log('Google Places API response received.', array(
+            'place_id' => $place_id,
+            'status_code' => $response_code,
+            'raw_body' => $body,
+        ));
 
         // Handle different response codes
         if ($response_code === 429) {
+            $this->log('Google Places API rate limit exceeded.', array('place_id' => $place_id));
             return new WP_Error('rate_limit', __('Google Places API rate limit exceeded. Please try again later.', 'ricreviews'));
         }
 
@@ -176,52 +175,52 @@ class RicReviews_API
                 }
             }
 
+            $this->log('Google Places API returned 403.', array(
+                'place_id' => $place_id,
+                'error_message' => $error_message,
+            ));
             return new WP_Error('invalid_key', $error_message);
         }
 
         if ($response_code === 404) {
             $error_message = __('Invalid Google Place ID.', 'ricreviews');
-            $debug_info = '';
-
             if (isset($data['error'])) {
                 if (isset($data['error']['message'])) {
                     $error_message = $data['error']['message'];
                 }
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    if (isset($data['error']['status'])) {
-                        $debug_info = ' (Status: ' . $data['error']['status'] . ')';
-                    }
-                    // Include full error details in debug mode
-                    $debug_info .= ' | Full Error: ' . wp_json_encode($data['error']);
-                }
             }
 
-            // Add debug info if available
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                $debug_info .= ' | Place ID used: ' . $place_id . ' | URL: ' . $url . ' | Body: ' . $body_json;
-            }
+            $this->log('Google Places API returned 404.', array(
+                'place_id' => $place_id,
+                'request_url' => $get_url,
+                'response_body' => $body,
+            ));
 
-            return new WP_Error('invalid_place', $error_message . $debug_info);
+            return new WP_Error('invalid_place', $error_message);
         }
 
         if ($response_code !== 200) {
             $error_message = sprintf(__('Google Places API returned error code: %d', 'ricreviews'), $response_code);
-            $debug_info = '';
 
-            if (isset($data['error'])) {
-                if (isset($data['error']['message'])) {
-                    $error_message = $data['error']['message'];
-                }
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    $debug_info = ' | Full error: ' . wp_json_encode($data['error']);
-                }
+            if (isset($data['error']['message'])) {
+                $error_message = $data['error']['message'];
             }
 
-            return new WP_Error('api_error', $error_message . $debug_info);
+            $this->log('Google Places API returned unexpected status.', array(
+                'place_id' => $place_id,
+                'status_code' => $response_code,
+                'response_body' => $body,
+            ));
+
+            return new WP_Error('api_error', $error_message);
         }
 
         // Check for JSON errors
         if (json_last_error() !== JSON_ERROR_NONE) {
+            $this->log('Failed to parse Google Places API response.', array(
+                'place_id' => $place_id,
+                'raw_body' => $body,
+            ));
             return new WP_Error('json_error', __('Failed to parse API response.', 'ricreviews'));
         }
 
@@ -235,6 +234,11 @@ class RicReviews_API
                 return new WP_Error('legacy_api', __('You need to enable Places API (New) in your Google Cloud Console. The legacy API is no longer available for new projects.', 'ricreviews'));
             }
 
+            $this->log('Google Places API returned an error payload.', array(
+                'place_id' => $place_id,
+                'error_code' => $error_code,
+                'error_message' => $error_message,
+            ));
             return new WP_Error($error_code, $error_message);
         }
 
@@ -242,6 +246,9 @@ class RicReviews_API
         // NOTE: Google Places API returns maximum 5 reviews per place
         // This is a hard limit from Google, not a bug in this code
         if (!isset($data['reviews']) || !is_array($data['reviews'])) {
+            $this->log('Google Places API response did not include reviews.', array(
+                'place_id' => $place_id,
+            ));
             return array();
         }
 
@@ -330,18 +337,14 @@ class RicReviews_API
                 }
             }
 
-            // Log language codes for each review (only in debug mode)
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log(sprintf(
-                    'RicReviews API - Review Language Codes - Review ID: %s | Requested: %s | Text Language: %s | Original Language: %s | Using Original: %s | Final Language: %s',
-                    substr($review_id, 0, 20) . '...',
-                    $requested_language ?: 'not set',
-                    $review_language ?: 'not set',
-                    $original_language ?: 'not set',
-                    $use_original ? 'yes' : 'no',
-                    $language_to_use ?: 'not set'
-                ));
-            }
+            $this->log('Resolved review language mapping.', array(
+                'review_id' => substr($review_id, 0, 20) . '...',
+                'requested_language' => $requested_language ?: 'not_set',
+                'review_language' => $review_language ?: 'not_set',
+                'original_language' => $original_language ?: 'not_set',
+                'using_original' => $use_original ? 'yes' : 'no',
+                'final_language' => $language_to_use ?: 'not_set',
+            ));
 
             $reviews[] = array(
                 'review_id' => $review_id,
@@ -358,14 +361,11 @@ class RicReviews_API
             );
         }
 
-        // Log summary (only in debug mode)
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log(sprintf(
-                'RicReviews API - Response Summary - Requested Language: %s | Reviews Returned: %d',
-                $requested_language ?: 'not set',
-                count($reviews)
-            ));
-        }
+        $this->log('Reviews fetched successfully.', array(
+            'place_id' => $place_id,
+            'language_short' => $requested_language ?: 'not_set',
+            'reviews_count' => count($reviews),
+        ));
 
         return $reviews;
     }
@@ -391,9 +391,10 @@ class RicReviews_API
         $all_reviews = array();
         $review_ids_seen = array(); // To avoid duplicates
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('RicReviews API - Multiple Languages Request - Languages: ' . implode(', ', $languages));
-        }
+        $this->log('Starting multi-language reviews fetch.', array(
+            'place_id' => $place_id,
+            'languages' => $languages,
+        ));
 
         foreach ($languages as $language) {
             $language = sanitize_text_field($language);
@@ -401,18 +402,21 @@ class RicReviews_API
                 continue;
             }
 
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                error_log('RicReviews API - Fetching reviews for language: ' . $language);
-            }
+            $this->log('Fetching reviews for specific language.', array(
+                'place_id' => $place_id,
+                'language' => $language,
+            ));
 
             // Fetch reviews for this language
             $reviews = $this->fetch_reviews($place_id, $api_key, $language);
 
             if (is_wp_error($reviews)) {
                 // Log error but continue with other languages
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    error_log('RicReviews - Error fetching reviews for language ' . $language . ': ' . $reviews->get_error_message());
-                }
+                $this->log('Error fetching reviews for language.', array(
+                    'place_id' => $place_id,
+                    'language' => $language,
+                    'error' => $reviews->get_error_message(),
+                ));
                 continue;
             }
 
@@ -433,6 +437,12 @@ class RicReviews_API
                 }
             }
         }
+
+        $this->log('Completed multi-language reviews fetch.', array(
+            'place_id' => $place_id,
+            'languages' => $languages,
+            'total_reviews' => count($all_reviews),
+        ));
 
         return $all_reviews;
     }

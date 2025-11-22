@@ -89,6 +89,11 @@ class RicReviews_Admin
             'default' => '',
         ));
 
+        register_setting('ricreviews_settings', 'ricreviews_debug_logging', array(
+            'sanitize_callback' => array($this, 'sanitize_toggle'),
+            'default' => 'no',
+        ));
+
         register_setting('ricreviews_settings', 'ricreviews_cron_enabled', array(
             'sanitize_callback' => 'sanitize_text_field',
             'default' => 'yes',
@@ -128,6 +133,17 @@ class RicReviews_Admin
         }
 
         return implode(',', array_unique($sanitized));
+    }
+
+    /**
+     * Sanitize checkbox-like inputs returning "yes" or "no".
+     *
+     * @param string $value Raw value.
+     * @return string
+     */
+    public function sanitize_toggle($value)
+    {
+        return $value === 'yes' ? 'yes' : 'no';
     }
 
     /**
@@ -187,6 +203,7 @@ class RicReviews_Admin
         $languages = get_option('ricreviews_languages', '');
         $cron_enabled = get_option('ricreviews_cron_enabled', 'yes');
         $cron_frequency = get_option('ricreviews_cron_frequency', 'daily');
+        $debug_logging = get_option('ricreviews_debug_logging', 'no');
 
         ?>
         <div class="wrap">
@@ -297,6 +314,22 @@ class RicReviews_Admin
                                 <br>
                                 <strong><?php esc_html_e('Note:', 'ricreviews'); ?></strong>
                                 <?php esc_html_e('Each language requires a separate API call. Leave empty to use only the default language (based on WordPress locale).', 'ricreviews'); ?>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th scope="row">
+                            <label for="ricreviews_debug_logging"><?php esc_html_e('Enable Debug Logging', 'ricreviews'); ?></label>
+                        </th>
+                        <td>
+                            <label class="switch">
+                                <input type="checkbox" id="ricreviews_debug_logging" name="ricreviews_debug_logging"
+                                    value="yes" <?php checked($debug_logging, 'yes'); ?> />
+                                <span class="slider round"></span>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('When enabled, the plugin writes API request and response details to the WordPress debug log. Make sure WP_DEBUG and WP_DEBUG_LOG are enabled.', 'ricreviews'); ?>
                             </p>
                         </td>
                     </tr>
@@ -658,6 +691,7 @@ class RicReviews_Admin
         update_option('ricreviews_primary_color', isset($_POST['ricreviews_primary_color']) ? sanitize_hex_color($_POST['ricreviews_primary_color']) : '#0073aa');
         update_option('ricreviews_theme', isset($_POST['ricreviews_theme']) ? sanitize_text_field($_POST['ricreviews_theme']) : 'light');
         update_option('ricreviews_languages', isset($_POST['ricreviews_languages']) ? $this->sanitize_languages($_POST['ricreviews_languages']) : '');
+        update_option('ricreviews_debug_logging', isset($_POST['ricreviews_debug_logging']) ? 'yes' : 'no');
 
         // Save cron settings
         $cron_enabled = isset($_POST['ricreviews_cron_enabled']) ? 'yes' : 'no';
