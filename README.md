@@ -1,7 +1,34 @@
 # RicReviews
 
+[![WordPress](https://img.shields.io/badge/WordPress-5.0+-blue.svg)](https://wordpress.org/)
+[![PHP](https://img.shields.io/badge/PHP-7.4+-purple.svg)](https://php.net/)
+[![License](https://img.shields.io/badge/License-GPL%20v2+-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
+[![GitHub stars](https://img.shields.io/github/stars/Richi2293/ricreviews?style=social)](https://github.com/Richi2293/ricreviews)
+
 A WordPress plugin that displays Google Places reviews on your website using a simple shortcode.  
 RicReviews fetches reviews from Google Places API (New) and displays them beautifully on your WordPress site.
+
+## 🚀 Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/Richi2293/ricreviews.git
+```
+
+1. Upload the `ricreviews` folder to `/wp-content/plugins/` directory
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Go to **Settings > RicReviews** to configure the plugin
+4. Add `[ricreviews]` shortcode to any page or post
+
+## Why RicReviews?
+
+- 🆓 **Free & Open Source**: No premium features, everything is free
+- 🔧 **Easy Setup**: Configure in minutes, no coding required
+- ⚡ **Performance**: Built-in caching for fast page loads
+- 🌐 **Multilingual**: Support for multiple languages out of the box
+- 🔄 **Auto-Updates**: Set it and forget it - reviews update automatically
+- 🎨 **Customizable**: Match your brand with custom colors and themes
+- 🔒 **Secure**: Follows WordPress coding standards and security best practices
 
 ## Features
 
