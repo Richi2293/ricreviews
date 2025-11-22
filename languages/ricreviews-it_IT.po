@@ -36,8 +36,8 @@ msgid "Google Places API returns a maximum of 5 reviews per place. This is a lim
 msgstr "Google Places API restituisce un massimo di 5 recensioni per luogo. Questa è una limitazione imposta da Google, non del plugin."
 
 #: includes/class-ricreviews-admin.php:149
-msgid "The plugin performs periodic fetches (every 24 hours) to update reviews. Over time, you may accumulate more reviews in the database as Google updates the \"5 most helpful reviews\" for your place."
-msgstr "Il plugin effettua fetch periodici (ogni 24 ore) per aggiornare le recensioni. Nel tempo, potresti accumulare più recensioni nel database man mano che Google aggiorna le \"5 recensioni più utili\" per il tuo luogo."
+msgid "The plugin performs periodic fetches (configurable below) to update reviews. Over time, you may accumulate more reviews in the database as Google updates the \"5 most helpful reviews\" for your place."
+msgstr "Il plugin effettua fetch periodici (configurabile di seguito) per aggiornare le recensioni. Nel tempo, potresti accumulare più recensioni nel database man mano che Google aggiorna le \"5 recensioni più utili\" per il tuo luogo."
 
 #: includes/class-ricreviews-admin.php:152
 msgid "To get all reviews:"
@@ -377,3 +377,44 @@ msgstr "Ultimo recupero:"
 #: includes/class-ricreviews-admin.php:438
 msgid "ago"
 msgstr "fa"
+
+#: includes/class-ricreviews-cron.php:40
+#: includes/class-ricreviews-admin.php:314
+msgid "Weekly"
+msgstr "Settimanale"
+
+#: includes/class-ricreviews-cron.php:45
+#: includes/class-ricreviews-admin.php:317
+msgid "Monthly"
+msgstr "Mensile"
+
+#: includes/class-ricreviews-admin.php:286
+msgid "Enable Automatic Updates"
+msgstr "Abilita Aggiornamenti Automatici"
+
+#: includes/class-ricreviews-admin.php:300
+msgid "Enable or disable the automatic fetching of reviews."
+msgstr "Abilita o disabilita il recupero automatico delle recensioni."
+
+#: includes/class-ricreviews-admin.php:305
+msgid "Update Frequency"
+msgstr "Frequenza Aggiornamento"
+
+#: includes/class-ricreviews-admin.php:311
+#: includes/class-ricreviews-admin.php:579
+msgid "Daily"
+msgstr "Giornaliero"
+
+
+
+#: includes/class-ricreviews-admin.php:321
+msgid "Select how often to fetch new reviews."
+msgstr "Seleziona la frequenza con cui recuperare nuove recensioni."
+
+#: includes/class-ricreviews-admin.php:323
+msgid "Enable Debug Logging"
+msgstr "Abilita Log di Debug"
+
+#: includes/class-ricreviews-admin.php:332
+msgid "When enabled, the plugin writes API request and response details to the WordPress debug log. Make sure WP_DEBUG and WP_DEBUG_LOG are enabled."
+msgstr "Quando abilitato, il plugin scrive i dettagli delle richieste e risposte API nel log di debug di WordPress. Assicurati che WP_DEBUG e WP_DEBUG_LOG siano abilitati."

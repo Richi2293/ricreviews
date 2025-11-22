@@ -6,11 +6,12 @@ RicReviews fetches reviews from Google Places API (New) and displays them beauti
 ## Features
 
 - 🎯 **Easy Integration**: Display reviews anywhere on your site with a simple shortcode
-- 🔄 **Automatic Updates**: Reviews are automatically fetched and updated every 24 hours via WordPress cron
+- 🔄 **Automatic Updates**: Reviews are automatically fetched and updated via configurable WordPress cron (daily, weekly, or monthly)
 - 💾 **Smart Caching**: Built-in caching system to improve performance
 - 🎨 **Customizable**: Choose your primary color and theme (light/dark)
 - 📊 **Flexible Display**: Control the number of reviews and sorting options
-- 🌍 **Multilingual Ready**: Includes translation files for internationalization
+- 🌍 **Multilingual Support**: Fetch reviews in multiple languages and filter by language in shortcode
+- 🐛 **Debug Logging**: Optional debug logging for troubleshooting API issues
 - 🔒 **Secure**: Follows WordPress coding standards and security best practices
 
 ## Requirements
@@ -59,6 +60,10 @@ RicReviews fetches reviews from Google Places API (New) and displays them beauti
 2. Enter your Google Places API Key
 3. Enter your Place ID
 4. Configure display options:
+   - **Additional Languages** (Optional): Enter comma-separated language codes (e.g., "en,fr,de") to fetch reviews in multiple languages
+   - **Enable Debug Logging**: Toggle debug logging for troubleshooting (requires WP_DEBUG enabled)
+   - **Enable Automatic Updates**: Toggle automatic fetching of reviews
+   - **Update Frequency**: Select how often to fetch reviews (Daily, Weekly, or Monthly)
    - **Number of Reviews**: Select how many reviews to display (5, 10, 15, or 20)
    - **Sort By**: Choose sorting method (Most Recent, Oldest First, or Highest Rating)
    - **Primary Color**: Pick a color for the reviews display
@@ -89,6 +94,7 @@ You can override the default settings using shortcode attributes:
 - `limit`: Number of reviews to display (default: from settings)
 - `order_by`: Sort method - `time` (most recent), `time_asc` (oldest first), or `rating` (highest rating)
 - `order`: Sort direction - `ASC` or `DESC` (default: `DESC`)
+- `language`: Language code to filter reviews (e.g., `"it"`, `"en"`, `"fr"`). If not specified, uses WordPress locale
 
 ### Examples
 
@@ -107,6 +113,16 @@ Display oldest reviews first:
 [ricreviews limit="15" order_by="time_asc"]
 ```
 
+Display reviews in a specific language:
+```
+[ricreviews language="en"]
+```
+
+Display 5 Italian reviews:
+```
+[ricreviews limit="5" language="it"]
+```
+
 ## How It Works
 
 1. **Initial Fetch**: When you save settings, the plugin fetches reviews from Google Places API
@@ -119,8 +135,8 @@ Display oldest reviews first:
 
 The plugin uses WordPress's built-in cron system to automatically fetch and update reviews:
 
-- **Schedule**: The cron job is scheduled to run **daily** (every 24 hours)
-- **Activation**: The cron job is automatically scheduled when you activate the plugin
+- **Schedule**: The cron job frequency is configurable (Daily, Weekly, or Monthly) and can be enabled/disabled from settings
+- **Activation**: The cron job is automatically scheduled when you activate the plugin (if enabled)
 - **Execution**: The cron runs when WordPress is accessed (page views trigger the cron check)
 - **What it does**: 
   - Fetches the latest reviews from Google Places API
@@ -128,9 +144,14 @@ The plugin uses WordPress's built-in cron system to automatically fetch and upda
   - Refreshes the cache with the latest data
 - **Language Support**: If you've configured multiple languages in settings, the cron will fetch reviews for all configured languages
 
-**Important Note**: WordPress cron is not a "real" cron job - it only runs when your site receives traffic. If your site has very low traffic, the cron may not run exactly every 24 hours. For high-traffic sites, the cron will run more reliably on schedule.
+**Configuration Options:**
+- Enable/disable automatic updates from the plugin settings
+- Choose update frequency: Daily, Weekly, or Monthly
+- The cron respects your language configuration and will fetch reviews in all configured languages
 
-**To manually trigger a fetch**: Simply save your settings in **Settings > RicReviews** - this will immediately fetch the latest reviews.
+**Important Note**: WordPress cron is not a "real" cron job - it only runs when your site receives traffic. If your site has very low traffic, the cron may not run exactly on schedule. For high-traffic sites, the cron will run more reliably on schedule.
+
+**To manually trigger a fetch**: Simply save your settings in **Settings > RicReviews** - this will immediately fetch the latest reviews. You can also use the "Fetch Reviews Now" button in the admin panel.
 
 ## Important Limitations
 
@@ -138,12 +159,27 @@ The plugin uses WordPress's built-in cron system to automatically fetch and upda
 
 **What this means:**
 - Each API call returns up to 5 reviews
-- The plugin performs automatic fetches every 24 hours
+- The plugin performs automatic fetches based on your configured frequency (daily, weekly, or monthly)
 - Over time, you may accumulate more reviews in the database as Google updates the "5 most helpful reviews" for your place
+- If you configure multiple languages, each language requires a separate API call, potentially allowing you to collect more reviews (up to 5 per language)
 - If you need all reviews, you must be the business owner and use Google My Business API
 
 **For more information:**
 - [Google's Review Policy Documentation](https://developers.google.com/maps/documentation/places/web-service/policies?hl=it#review-policy)
+
+## Multilingual Support
+
+The plugin supports fetching and displaying reviews in multiple languages:
+
+- **Default Language**: Uses WordPress locale automatically
+- **Additional Languages**: Configure comma-separated language codes in settings (e.g., "en,fr,de") to fetch reviews in multiple languages
+- **Language Filtering**: Use the `language` attribute in shortcode to filter reviews by specific language
+- **Multiple Language Fetching**: When multiple languages are configured, the plugin makes separate API calls for each language and merges the results, avoiding duplicates
+
+**Example:**
+- Configure "en,fr" in settings → Plugin fetches reviews in English and French
+- Use `[ricreviews language="en"]` → Displays only English reviews
+- Use `[ricreviews language="fr"]` → Displays only French reviews
 
 ## File Structure
 
@@ -160,6 +196,7 @@ ricreviews/
 │   ├── class-ricreviews-cache.php     # Caching system
 │   ├── class-ricreviews-cron.php      # WordPress cron handler
 │   ├── class-ricreviews-database.php  # Database operations
+│   ├── class-ricreviews-logger.php    # Debug logging system
 │   └── class-ricreviews-shortcode.php # Shortcode handler
 ├── languages/
 │   ├── ricreviews-en_US.mo
@@ -203,7 +240,7 @@ define('WP_DEBUG', true);
 define('WP_DEBUG_LOG', true);
 ```
 
-The plugin will log API requests and responses to the debug log when `WP_DEBUG` is enabled.
+The plugin includes an optional debug logging feature that can be enabled from the plugin settings. When enabled, the plugin will log API requests and responses to the WordPress debug log. Make sure both `WP_DEBUG` and `WP_DEBUG_LOG` are enabled in your `wp-config.php` file for logging to work.
 
 ## Contributing
 
@@ -300,4 +337,3 @@ GNU General Public License for more details.
 ---
 
 **Made for WordPress** | **Open Source** | **Community Driven**
-

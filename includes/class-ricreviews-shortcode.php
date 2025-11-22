@@ -21,6 +21,7 @@ class RicReviews_Shortcode {
     public function __construct() {
         add_shortcode('ricreviews', array($this, 'render_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'maybe_enqueue_styles'));
+        add_action('wp_footer', array($this, 'maybe_enqueue_styles_footer'));
     }
     
     /**
@@ -214,13 +215,12 @@ class RicReviews_Shortcode {
                                 
                                 <div class="ricreviews-item__rating">
                                     <?php echo $this->render_stars($review['rating']); ?>
+                                    <?php if (!empty($review['relative_time_description'])) : ?>
+                                        <span class="ricreviews-item__time">
+                                            <?php echo esc_html($review['relative_time_description']); ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
-                                
-                                <?php if (!empty($review['relative_time_description'])) : ?>
-                                    <div class="ricreviews-item__time">
-                                        <?php echo esc_html($review['relative_time_description']); ?>
-                                    </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                         
@@ -270,21 +270,43 @@ class RicReviews_Shortcode {
     }
     
     /**
-     * Maybe enqueue styles if shortcode is used
+     * Maybe enqueue styles if shortcode is used (early check)
      *
      * @return void
      */
     public function maybe_enqueue_styles() {
-        global $ricreviews_shortcode_used;
+        global $post;
         
-        // Check if shortcode is used on current page
-        if (isset($ricreviews_shortcode_used) && $ricreviews_shortcode_used) {
+        // Check if shortcode exists in post content
+        if (isset($post) && is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'ricreviews')) {
             wp_enqueue_style(
                 'ricreviews',
                 RICREVIEWS_PLUGIN_URL . 'public/css/ricreviews.css',
                 array(),
                 RICREVIEWS_VERSION
             );
+        }
+    }
+    
+    /**
+     * Maybe enqueue styles in footer (fallback for shortcode rendered after wp_enqueue_scripts)
+     *
+     * @return void
+     */
+    public function maybe_enqueue_styles_footer() {
+        global $ricreviews_shortcode_used;
+        
+        // Check if shortcode was used during rendering
+        if (isset($ricreviews_shortcode_used) && $ricreviews_shortcode_used) {
+            // Enqueue styles if not already enqueued
+            if (!wp_style_is('ricreviews', 'enqueued')) {
+                wp_enqueue_style(
+                    'ricreviews',
+                    RICREVIEWS_PLUGIN_URL . 'public/css/ricreviews.css',
+                    array(),
+                    RICREVIEWS_VERSION
+                );
+            }
         }
     }
 }

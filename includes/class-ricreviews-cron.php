@@ -26,7 +26,28 @@ class RicReviews_Cron {
      * Constructor
      */
     public function __construct() {
+        add_filter('cron_schedules', array($this, 'add_custom_cron_schedules'));
         add_action($this->cron_hook, array($this, 'fetch_and_update_reviews'));
+    }
+    
+    /**
+     * Add custom cron schedules
+     *
+     * @param array $schedules Existing schedules
+     * @return array Modified schedules
+     */
+    public function add_custom_cron_schedules($schedules) {
+        $schedules['weekly'] = array(
+            'interval' => 604800, // 7 * 24 * 60 * 60
+            'display'  => __('Weekly', 'ricreviews')
+        );
+        
+        $schedules['monthly'] = array(
+            'interval' => 2592000, // 30 * 24 * 60 * 60 (approximate)
+            'display'  => __('Monthly', 'ricreviews')
+        );
+        
+        return $schedules;
     }
     
     /**
@@ -35,9 +56,32 @@ class RicReviews_Cron {
      * @return void
      */
     public function schedule_event() {
-        if (!wp_next_scheduled($this->cron_hook)) {
-            wp_schedule_event(time(), 'daily', $this->cron_hook);
+        $enabled = get_option('ricreviews_cron_enabled', 'yes');
+        
+        // If disabled, unschedule and return
+        if ($enabled !== 'yes') {
+            $this->unschedule_event();
+            return;
         }
+
+        $frequency = get_option('ricreviews_cron_frequency', 'daily');
+        
+        // Check if already scheduled
+        $timestamp = wp_next_scheduled($this->cron_hook);
+        
+        if ($timestamp) {
+            // Check if the frequency matches
+            $schedule = wp_get_schedule($this->cron_hook);
+            if ($schedule === $frequency) {
+                return; // Already scheduled correctly
+            }
+            
+            // If frequency changed, unschedule first
+            wp_unschedule_event($timestamp, $this->cron_hook);
+        }
+        
+        // Schedule new event
+        wp_schedule_event(time(), $frequency, $this->cron_hook);
     }
     
     /**
@@ -50,6 +94,16 @@ class RicReviews_Cron {
         if ($timestamp) {
             wp_unschedule_event($timestamp, $this->cron_hook);
         }
+    }
+    
+    /**
+     * Reschedule event (helper for admin settings)
+     * 
+     * @return void
+     */
+    public function reschedule_event() {
+        $this->unschedule_event();
+        $this->schedule_event();
     }
     
     /**

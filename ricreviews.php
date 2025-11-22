@@ -47,6 +47,7 @@ spl_autoload_register(function ($class) {
 
 // Include required files
 require_once RICREVIEWS_PLUGIN_DIR . 'includes/class-ricreviews-database.php';
+require_once RICREVIEWS_PLUGIN_DIR . 'includes/class-ricreviews-logger.php';
 require_once RICREVIEWS_PLUGIN_DIR . 'includes/class-ricreviews-api.php';
 require_once RICREVIEWS_PLUGIN_DIR . 'includes/class-ricreviews-cache.php';
 require_once RICREVIEWS_PLUGIN_DIR . 'includes/class-ricreviews-admin.php';
