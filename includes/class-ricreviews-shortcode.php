@@ -215,13 +215,12 @@ class RicReviews_Shortcode {
                                 
                                 <div class="ricreviews-item__rating">
                                     <?php echo $this->render_stars($review['rating']); ?>
+                                    <?php if (!empty($review['relative_time_description'])) : ?>
+                                        <span class="ricreviews-item__time">
+                                            <?php echo esc_html($review['relative_time_description']); ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
-                                
-                                <?php if (!empty($review['relative_time_description'])) : ?>
-                                    <div class="ricreviews-item__time">
-                                        <?php echo esc_html($review['relative_time_description']); ?>
-                                    </div>
-                                <?php endif; ?>
                             </div>
                         </div>
                         
