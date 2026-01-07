@@ -386,10 +386,10 @@ msgstr "Enable Debug Logging"
 msgid "When enabled, the plugin writes API request and response details to the WordPress debug log. Make sure WP_DEBUG and WP_DEBUG_LOG are enabled."
 msgstr "When enabled, the plugin writes API request and response details to the WordPress debug log. Make sure WP_DEBUG and WP_DEBUG_LOG are enabled."
 
-#: includes/class-ricreviews-shortcode.php
+#: includes/class-ricreviews-shortcode.php:283
 msgid "Have you visited this place? Leave a review!"
 msgstr "Have you visited this place? Leave a review!"
 
-#: includes/class-ricreviews-shortcode.php
+#: includes/class-ricreviews-shortcode.php:289
 msgid "Write a Review"
 msgstr "Write a Review"
