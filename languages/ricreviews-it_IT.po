@@ -418,3 +418,11 @@ msgstr "Abilita Log di Debug"
 #: includes/class-ricreviews-admin.php:332
 msgid "When enabled, the plugin writes API request and response details to the WordPress debug log. Make sure WP_DEBUG and WP_DEBUG_LOG are enabled."
 msgstr "Quando abilitato, il plugin scrive i dettagli delle richieste e risposte API nel log di debug di WordPress. Assicurati che WP_DEBUG e WP_DEBUG_LOG siano abilitati."
+
+#: includes/class-ricreviews-shortcode.php:283
+msgid "Have you visited this place? Leave a review!"
+msgstr "Hai visitato questo luogo? Lascia una recensione!"
+
+#: includes/class-ricreviews-shortcode.php:289
+msgid "Write a Review"
+msgstr "Scrivi una Recensione"

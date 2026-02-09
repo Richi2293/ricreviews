@@ -184,11 +184,13 @@ class RicReviews_Shortcode {
     private function render_reviews($reviews) {
         $primary_color = get_option('ricreviews_primary_color', '#0073aa');
         $theme = get_option('ricreviews_theme', 'light');
+        $place_id = get_option('ricreviews_place_id');
         
         ob_start();
         ?>
         <div class="ricreviews-container ricreviews-theme-<?php echo esc_attr($theme); ?>" 
              style="--ricreviews-primary-color: <?php echo esc_attr($primary_color); ?>">
+            <?php echo $this->render_review_invite_panel($place_id); ?>
             <div class="ricreviews-list">
                 <?php foreach ($reviews as $review) : ?>
                     <div class="ricreviews-item">
@@ -257,6 +259,39 @@ class RicReviews_Shortcode {
         $output .= '</div>';
         
         return $output;
+    }
+    
+    /**
+     * Render review invite panel
+     *
+     * @param string $place_id Google Place ID
+     * @return string
+     */
+    private function render_review_invite_panel($place_id) {
+        if (empty($place_id)) {
+            return '';
+        }
+        
+        // Generate Google Maps review URL
+        $review_url = 'https://search.google.com/local/writereview?placeid=' . urlencode($place_id);
+        
+        ob_start();
+        ?>
+        <div class="ricreviews-invite-panel">
+            <div class="ricreviews-invite-panel__content">
+                <div class="ricreviews-invite-panel__message">
+                    <?php echo esc_html__('Have you visited this place? Leave a review!', 'ricreviews'); ?>
+                </div>
+                <a href="<?php echo esc_url($review_url); ?>" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="ricreviews-invite-panel__button">
+                    <?php echo esc_html__('Write a Review', 'ricreviews'); ?>
+                </a>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
     }
     
     /**
