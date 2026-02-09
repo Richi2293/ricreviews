@@ -1,6 +1,6 @@
 === RicReviews ===
 Contributors: Richi2293
-Tags: reviews, google-places, testimonials, ratings, shortcode, google-maps, business-reviews
+Tags: reviews, google-places, testimonials, ratings, shortcode
 Requires at least: 5.0
 Tested up to: 6.9
 Stable tag: 1.0.0
@@ -8,7 +8,7 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Display Google Places reviews on your WordPress site using a simple shortcode. RicReviews fetches reviews from Google Places API (New) and displays them beautifully on your WordPress site.
+Display Google Places reviews on your WordPress site using a simple shortcode. Fetches reviews from Google Places API (New).
 
 == Description ==
 

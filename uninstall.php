@@ -24,6 +24,9 @@ $options = array(
     'ricreviews_theme',
     'ricreviews_languages',
     'ricreviews_last_fetch',
+    'ricreviews_debug_logging',
+    'ricreviews_cron_enabled',
+    'ricreviews_cron_frequency',
 );
 
 foreach ($options as $option) {
