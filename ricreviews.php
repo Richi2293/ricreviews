@@ -139,12 +139,7 @@ class RicReviews {
      * Initialize plugin components
      */
     public function init() {
-        // Load plugin text domain for translations
-        load_plugin_textdomain(
-            'ricreviews',
-            false,
-            dirname(RICREVIEWS_PLUGIN_BASENAME) . '/languages'
-        );
+        // Translations are automatically loaded by WordPress.org for plugins hosted on WordPress.org
         
         // Initialize admin
         if (is_admin()) {
