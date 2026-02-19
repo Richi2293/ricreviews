@@ -1,5 +1,5 @@
 === RicReviews ===
-Contributors: Richi2293
+Contributors: riccardolorenzi
 Tags: reviews, google-places, testimonials, ratings, shortcode
 Requires at least: 5.0
 Tested up to: 6.9

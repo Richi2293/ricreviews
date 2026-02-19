@@ -117,22 +117,19 @@ class RicReviews_Admin
             return '';
         }
 
-        // Split by comma and sanitize each language code
+        // Split by comma and validate each language code against BCP47 format
         $languages = explode(',', $input);
-        $sanitized = array();
+        $valid = array();
 
         foreach ($languages as $lang) {
-            $lang = trim(sanitize_text_field($lang));
-            if (!empty($lang)) {
-                // Convert to lowercase and keep only letters
-                $lang = strtolower(preg_replace('/[^a-z]/', '', $lang));
-                if (!empty($lang) && strlen($lang) <= 5) {
-                    $sanitized[] = $lang;
-                }
+            $lang = trim($lang);
+            // Validate BCP47 locale codes: e.g. 'en', 'fr', 'pt-BR', 'zh-CN'
+            if (preg_match('/^[a-z]{2,3}(-[A-Z]{2})?$/', $lang)) {
+                $valid[] = $lang;
             }
         }
 
-        return implode(',', array_unique($sanitized));
+        return implode(',', array_unique($valid));
     }
 
     /**
@@ -176,6 +173,21 @@ class RicReviews_Admin
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ricreviews_admin_nonce'),
         ));
+
+        wp_add_inline_script(
+            'ricreviews-admin',
+            'jQuery(document).ready(function ($) {
+                function toggleFrequency() {
+                    if ($("#ricreviews_cron_enabled").is(":checked")) {
+                        $("#ricreviews_cron_frequency_row").show();
+                    } else {
+                        $("#ricreviews_cron_frequency_row").hide();
+                    }
+                }
+                $("#ricreviews_cron_enabled").on("change", toggleFrequency);
+                toggleFrequency();
+            });'
+        );
     }
 
     /**
@@ -374,20 +386,7 @@ class RicReviews_Admin
                         </td>
                     </tr>
 
-                    <script>
-                        jQuery(document).ready(function ($) {
-                            function toggleFrequency() {
-                                if ($('#ricreviews_cron_enabled').is(':checked')) {
-                                    $('#ricreviews_cron_frequency_row').show();
-                                } else {
-                                    $('#ricreviews_cron_frequency_row').hide();
-                                }
-                            }
 
-                            $('#ricreviews_cron_enabled').on('change', toggleFrequency);
-                            toggleFrequency(); // Initial check
-                        });
-                    </script>
 
                     <tr>
                         <th scope="row">
@@ -605,7 +604,7 @@ class RicReviews_Admin
                                 <div class="ricreviews-review-author">
                                     <strong><?php echo esc_html($review['author_name']); ?></strong>
                                     <div class="ricreviews-review-rating">
-                                        <?php echo $this->render_stars($review['rating']); ?>
+                                        <?php echo wp_kses_post( $this->render_stars( $review['rating'] ) ); ?>
                                         <span class="ricreviews-review-rating-value"><?php echo esc_html($review['rating']); ?>/5</span>
                                     </div>
                                     <?php if (!empty($review['relative_time_description'])): ?>
