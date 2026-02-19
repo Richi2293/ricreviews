@@ -196,7 +196,7 @@ class RicReviews_Admin
     public function render_settings_page()
     {
         if (!current_user_can('manage_options')) {
-            wp_die(__('You do not have sufficient permissions to access this page.', 'ricreviews'));
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'ricreviews'));
         }
 
         // Handle form submission
@@ -332,12 +332,13 @@ class RicReviews_Admin
 
                     <tr>
                         <th scope="row">
-                            <label for="ricreviews_debug_logging"><?php esc_html_e('Enable Debug Logging', 'ricreviews'); ?></label>
+                            <label
+                                for="ricreviews_debug_logging"><?php esc_html_e('Enable Debug Logging', 'ricreviews'); ?></label>
                         </th>
                         <td>
                             <label class="switch">
-                                <input type="checkbox" id="ricreviews_debug_logging" name="ricreviews_debug_logging"
-                                    value="yes" <?php checked($debug_logging, 'yes'); ?> />
+                                <input type="checkbox" id="ricreviews_debug_logging" name="ricreviews_debug_logging" value="yes"
+                                    <?php checked($debug_logging, 'yes'); ?> />
                                 <span class="slider round"></span>
                             </label>
                             <p class="description">
@@ -474,11 +475,14 @@ class RicReviews_Admin
                 </p>
                 <ul style="list-style: disc; margin-left: 20px;">
                     <li><code>limit</code> -
-                        <?php esc_html_e('Number of reviews to display (default: from settings)', 'ricreviews'); ?></li>
+                        <?php esc_html_e('Number of reviews to display (default: from settings)', 'ricreviews'); ?>
+                    </li>
                     <li><code>order_by</code> -
-                        <?php esc_html_e('Sort by: time, time_asc, rating (default: from settings)', 'ricreviews'); ?></li>
+                        <?php esc_html_e('Sort by: time, time_asc, rating (default: from settings)', 'ricreviews'); ?>
+                    </li>
                     <li><code>order</code> -
-                        <?php esc_html_e('Order direction: ASC or DESC (default: from settings)', 'ricreviews'); ?></li>
+                        <?php esc_html_e('Order direction: ASC or DESC (default: from settings)', 'ricreviews'); ?>
+                    </li>
                     <li><code>language</code> -
                         <?php esc_html_e('Language code to filter reviews (e.g., "it", "en"). If not specified, uses WordPress locale (default)', 'ricreviews'); ?>
                     </li>
@@ -488,11 +492,14 @@ class RicReviews_Admin
                 </p>
                 <ul style="list-style: disc; margin-left: 20px;">
                     <li><code>[ricreviews]</code> -
-                        <?php esc_html_e('Display reviews with default settings and WordPress locale', 'ricreviews'); ?></li>
+                        <?php esc_html_e('Display reviews with default settings and WordPress locale', 'ricreviews'); ?>
+                    </li>
                     <li><code>[ricreviews language="en"]</code> -
-                        <?php esc_html_e('Display only English reviews', 'ricreviews'); ?></li>
+                        <?php esc_html_e('Display only English reviews', 'ricreviews'); ?>
+                    </li>
                     <li><code>[ricreviews limit="5" language="it"]</code> -
-                        <?php esc_html_e('Display 5 Italian reviews', 'ricreviews'); ?></li>
+                        <?php esc_html_e('Display 5 Italian reviews', 'ricreviews'); ?>
+                    </li>
                 </ul>
             </div>
 
@@ -596,15 +603,22 @@ class RicReviews_Admin
                             <div class="ricreviews-review-header">
                                 <?php if (!empty($review['profile_photo_url'])): ?>
                                     <div class="ricreviews-review-avatar">
-                                        <img src="<?php echo esc_url($review['profile_photo_url']); ?>"
-                                            alt="<?php echo esc_attr($review['author_name']); ?>" width="40" height="40" />
+                                        <img
+                                            src="<?php echo esc_url($review['profile_photo_url']); ?>"
+                                            alt="<?php echo esc_attr($review['author_name']); ?>"
+                                            width="40"
+                                            height="40"
+                                            loading="lazy"
+                                            decoding="async"
+                                            referrerpolicy="no-referrer"
+                                        />
                                     </div>
                                 <?php endif; ?>
 
                                 <div class="ricreviews-review-author">
                                     <strong><?php echo esc_html($review['author_name']); ?></strong>
                                     <div class="ricreviews-review-rating">
-                                        <?php echo wp_kses_post( $this->render_stars( $review['rating'] ) ); ?>
+                                        <?php echo wp_kses_post($this->render_stars($review['rating'])); ?>
                                         <span class="ricreviews-review-rating-value"><?php echo esc_html($review['rating']); ?>/5</span>
                                     </div>
                                     <?php if (!empty($review['relative_time_description'])): ?>
@@ -659,9 +673,14 @@ class RicReviews_Admin
      */
     private function save_settings()
     {
+        // Nonce verification — already verified in render_settings_page(), but we verify again
+        // here to satisfy static analysis tools that inspect this method in isolation.
+        check_admin_referer('ricreviews_settings_nonce', 'ricreviews_nonce');
+
         // Validate and save API key
-        $api_key = isset($_POST['ricreviews_api_key']) ? sanitize_text_field($_POST['ricreviews_api_key']) : '';
-        $place_id = isset($_POST['ricreviews_place_id']) ? sanitize_text_field($_POST['ricreviews_place_id']) : '';
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- wp_unslash applied below
+        $api_key = isset($_POST['ricreviews_api_key']) ? sanitize_text_field(wp_unslash($_POST['ricreviews_api_key'])) : '';
+        $place_id = isset($_POST['ricreviews_place_id']) ? sanitize_text_field(wp_unslash($_POST['ricreviews_place_id'])) : '';
 
         // Validate API key if provided
         if (!empty($api_key) && !empty($place_id)) {
@@ -680,21 +699,22 @@ class RicReviews_Admin
         }
 
         // Save all settings
-        $order_by = isset($_POST['ricreviews_order_by']) ? sanitize_text_field($_POST['ricreviews_order_by']) : 'time';
+        $order_by = isset($_POST['ricreviews_order_by']) ? sanitize_text_field(wp_unslash($_POST['ricreviews_order_by'])) : 'time';
 
         update_option('ricreviews_api_key', $api_key);
         update_option('ricreviews_place_id', $place_id);
         update_option('ricreviews_limit', isset($_POST['ricreviews_limit']) ? absint($_POST['ricreviews_limit']) : 10);
         update_option('ricreviews_order_by', $order_by);
         update_option('ricreviews_order', $order_by === 'time_asc' ? 'ASC' : 'DESC');
-        update_option('ricreviews_primary_color', isset($_POST['ricreviews_primary_color']) ? sanitize_hex_color($_POST['ricreviews_primary_color']) : '#0073aa');
-        update_option('ricreviews_theme', isset($_POST['ricreviews_theme']) ? sanitize_text_field($_POST['ricreviews_theme']) : 'light');
-        update_option('ricreviews_languages', isset($_POST['ricreviews_languages']) ? $this->sanitize_languages($_POST['ricreviews_languages']) : '');
+        update_option('ricreviews_primary_color', isset($_POST['ricreviews_primary_color']) ? sanitize_hex_color(wp_unslash($_POST['ricreviews_primary_color'])) : '#0073aa');
+        update_option('ricreviews_theme', isset($_POST['ricreviews_theme']) ? sanitize_text_field(wp_unslash($_POST['ricreviews_theme'])) : 'light');
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_languages() is a custom sanitization callback that validates each language code against an allowlist.
+        update_option('ricreviews_languages', isset($_POST['ricreviews_languages']) ? $this->sanitize_languages(wp_unslash($_POST['ricreviews_languages'])) : '');
         update_option('ricreviews_debug_logging', isset($_POST['ricreviews_debug_logging']) ? 'yes' : 'no');
 
         // Save cron settings
         $cron_enabled = isset($_POST['ricreviews_cron_enabled']) ? 'yes' : 'no';
-        $cron_frequency = isset($_POST['ricreviews_cron_frequency']) ? sanitize_text_field($_POST['ricreviews_cron_frequency']) : 'daily';
+        $cron_frequency = isset($_POST['ricreviews_cron_frequency']) ? sanitize_text_field(wp_unslash($_POST['ricreviews_cron_frequency'])) : 'daily';
 
         update_option('ricreviews_cron_enabled', $cron_enabled);
         update_option('ricreviews_cron_frequency', $cron_frequency);
@@ -770,8 +790,8 @@ class RicReviews_Admin
             wp_send_json_error(array('message' => __('You do not have permission to perform this action.', 'ricreviews')));
         }
 
-        $api_key = isset($_POST['api_key']) ? sanitize_text_field($_POST['api_key']) : '';
-        $place_id = isset($_POST['place_id']) ? sanitize_text_field($_POST['place_id']) : '';
+        $api_key = isset($_POST['api_key']) ? sanitize_text_field(wp_unslash($_POST['api_key'])) : '';
+        $place_id = isset($_POST['place_id']) ? sanitize_text_field(wp_unslash($_POST['place_id'])) : '';
 
         if (empty($api_key) || empty($place_id)) {
             wp_send_json_error(array('message' => __('API key and Place ID are required.', 'ricreviews')));
@@ -862,9 +882,9 @@ class RicReviews_Admin
         update_option('ricreviews_last_fetch', current_time('mysql'));
 
         wp_send_json_success(array(
+            // translators: %d is the number of reviews successfully fetched.
             'message' => sprintf(__('Successfully fetched %d review(s).', 'ricreviews'), count($reviews)),
             'count' => count($reviews)
         ));
     }
 }
-

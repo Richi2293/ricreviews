@@ -14,7 +14,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 require_once plugin_dir_path(__FILE__) . 'includes/class-ricreviews-database.php';
 
 // Remove all options
-$options = array(
+$ricreviews_options = array(
     'ricreviews_api_key',
     'ricreviews_place_id',
     'ricreviews_limit',
@@ -29,12 +29,13 @@ $options = array(
     'ricreviews_cron_frequency',
 );
 
-foreach ($options as $option) {
-    delete_option($option);
+foreach ($ricreviews_options as $ricreviews_option) {
+    delete_option($ricreviews_option);
 }
 
 // Clear all transients
 global $wpdb;
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Necessary to bulk-delete plugin transients; no WP API can do this efficiently.
 $wpdb->query(
     $wpdb->prepare(
         "DELETE FROM {$wpdb->options} 
@@ -46,12 +47,12 @@ $wpdb->query(
 );
 
 // Remove scheduled cron events
-$timestamp = wp_next_scheduled('ricreviews_daily_fetch');
-if ($timestamp) {
-    wp_unschedule_event($timestamp, 'ricreviews_daily_fetch');
+$ricreviews_timestamp = wp_next_scheduled('ricreviews_daily_fetch');
+if ($ricreviews_timestamp) {
+    wp_unschedule_event($ricreviews_timestamp, 'ricreviews_daily_fetch');
 }
 
 // Drop database table
-$database = new RicReviews_Database();
-$database->drop_table();
+$ricreviews_database = new RicReviews_Database();
+$ricreviews_database->drop_table();
 

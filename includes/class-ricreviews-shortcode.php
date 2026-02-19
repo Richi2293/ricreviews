@@ -203,8 +203,13 @@ class RicReviews_Shortcode
                         <div class="ricreviews-item__header">
                             <?php if (!empty($review['profile_photo_url'])): ?>
                                 <div class="ricreviews-item__avatar">
-                                    <img src="<?php echo esc_url($review['profile_photo_url']); ?>"
-                                        alt="<?php echo esc_attr($review['author_name']); ?>" />
+                                    <img
+                                        src="<?php echo esc_url($review['profile_photo_url']); ?>"
+                                        alt="<?php echo esc_attr($review['author_name']); ?>"
+                                        loading="lazy"
+                                        decoding="async"
+                                        referrerpolicy="no-referrer"
+                                    />
                                 </div>
                             <?php endif; ?>
 
@@ -353,4 +358,3 @@ class RicReviews_Shortcode
         }
     }
 }
-
