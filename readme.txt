@@ -3,7 +3,7 @@ Contributors: riccardolorenzi
 Tags: reviews, google-places, testimonials, ratings, shortcode
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -136,6 +136,9 @@ No, the plugin does not track users. The plugin only makes API calls to Google P
 3. Shortcode configuration options
 
 == Changelog ==
+
+= 1.0.1 =
+* fix security issues
 
 = 1.0.0 =
 * Initial release
