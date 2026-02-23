@@ -51,6 +51,7 @@ class RicReviews_Logger
             }
         }
 
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional: logging is gated by the user-controlled 'ricreviews_debug_logging' option and only active when the user explicitly enables debug mode.
         error_log($entry);
     }
 }
